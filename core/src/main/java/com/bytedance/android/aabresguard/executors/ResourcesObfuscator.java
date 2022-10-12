@@ -277,9 +277,7 @@ public class ResourcesObfuscator {
             String bundleRawPath = bundleModule.getName().getName() + "/" + entry.getPath().toString();
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
             if (obfuscatedPath != null) {
-
-                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, hunxiaotupianziyuan(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
-
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
                 obfuscateEntries.add(entry);
@@ -295,16 +293,23 @@ public class ResourcesObfuscator {
         return builder.build();
     }
 
-
-    private byte[] hunxiaotupianziyuan(String bundleRawPath, InputStream inputStream) throws IOException {
+    /**
+     * 混淆图片
+     *
+     * @param bundleRawPath
+     * @param inputStream
+     * @return
+     * @throws IOException
+     */
+    private byte[] obfuscatorResContent(String bundleRawPath, InputStream inputStream) throws IOException {
         String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
         try {
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
+                BufferedImage bii = obfuscatorRandomPixel(inputStream);
                 System.err.println("图片被处理：" + bundleRawPath);
-                BufferedImage bii = img_color_gradation(inputStream);
-
-              //  System.err.println("图片被处理：" + bundleRawPath);
                 return bufferedImageToByteArray(bii, extension);
+            } else if (extension.endsWith("xml")) {
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -314,8 +319,13 @@ public class ResourcesObfuscator {
         return bytes;
     }
 
-    //图片色阶调整，调整rgb的分量
-    public static BufferedImage img_color_gradation(InputStream inputStream) {
+    /**
+     * 混淆随机像素点
+     *
+     * @param inputStream
+     * @return
+     */
+    public static BufferedImage obfuscatorRandomPixel(InputStream inputStream) {
         try {
             BufferedImage imgsrc = ImageIO.read(inputStream);
             int width = imgsrc.getWidth();
