@@ -1,5 +1,14 @@
 package com.bytedance.android.aabresguard.executors;
 
+import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileDoesNotExist;
+import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getEntryNameByResourceName;
+import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getTypeNameByResourceName;
+import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.checkConfiguration;
+import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.updateEntryConfigValueList;
+import static com.bytedance.android.aabresguard.utils.FileOperation.getFilePrefixByFileName;
+import static com.bytedance.android.aabresguard.utils.FileOperation.getNameFromZipFilePath;
+import static com.bytedance.android.aabresguard.utils.FileOperation.getParentFromZipFilePath;
+
 import com.android.aapt.Resources;
 import com.android.tools.build.bundletool.model.AppBundle;
 import com.android.tools.build.bundletool.model.BundleModule;
@@ -16,12 +25,19 @@ import com.bytedance.android.aabresguard.model.ResourcesMapping;
 import com.bytedance.android.aabresguard.obfuscation.ResGuardStringBuilder;
 import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
 import com.bytedance.android.aabresguard.utils.FileOperation;
+import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
 import com.google.common.collect.ImmutableMap;
 
+import org.apache.commons.io.IOUtils;
+
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +46,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -37,14 +54,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
-import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileDoesNotExist;
-import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getEntryNameByResourceName;
-import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getTypeNameByResourceName;
-import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.checkConfiguration;
-import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.updateEntryConfigValueList;
-import static com.bytedance.android.aabresguard.utils.FileOperation.getFilePrefixByFileName;
-import static com.bytedance.android.aabresguard.utils.FileOperation.getNameFromZipFilePath;
-import static com.bytedance.android.aabresguard.utils.FileOperation.getParentFromZipFilePath;
+import javax.imageio.ImageIO;
+
 
 /**
  * Created by YangJing on 2019/10/14 .
@@ -266,7 +277,9 @@ public class ResourcesObfuscator {
             String bundleRawPath = bundleModule.getName().getName() + "/" + entry.getPath().toString();
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
             if (obfuscatedPath != null) {
-                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, AppBundleUtils.readByte(bundleZipFile, entry, bundleModule));
+
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, hunxiaotupianziyuan(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
+
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
                 obfuscateEntries.add(entry);
@@ -281,6 +294,70 @@ public class ResourcesObfuscator {
         }
         return builder.build();
     }
+
+
+    private byte[] hunxiaotupianziyuan(String bundleRawPath, InputStream inputStream) throws IOException {
+        String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+        try {
+            if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
+                System.err.println("图片被处理：" + bundleRawPath);
+                BufferedImage bii = img_color_gradation(inputStream);
+
+              //  System.err.println("图片被处理：" + bundleRawPath);
+                return bufferedImageToByteArray(bii, extension);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        byte[] bytes = IOUtils.toByteArray(inputStream);
+        inputStream.close();
+        return bytes;
+    }
+
+    //图片色阶调整，调整rgb的分量
+    public static BufferedImage img_color_gradation(InputStream inputStream) {
+        try {
+            BufferedImage imgsrc = ImageIO.read(inputStream);
+            int width = imgsrc.getWidth();
+            int height = imgsrc.getHeight();
+
+            //随机处理一个像素点
+            int w = new Random().nextInt(Math.max(width - 1, 1));
+            int h = new Random().nextInt(Math.max(height - 1, 1));
+            int pixel = imgsrc.getRGB(w, h);
+            Color color = new Color(pixel);
+            int red = color.getRed() + 1;
+            if (red > 255) {
+                red = 255;
+            }
+
+            int green = color.getGreen() - 1;
+            if (green < 0) {
+                green = 0;
+            }
+            color = new Color(red, green, color.getBlue());
+            imgsrc.setRGB(w, h, color.getRGB());
+            return imgsrc;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 将BufferedImage转换为byte[]
+     *
+     * @param image
+     * @return
+     */
+    public byte[] bufferedImageToByteArray(BufferedImage image, String extension) throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(image, extension, os);
+        byte[] b = os.toByteArray();
+        os.close();
+        return b;
+    }
+
 
     /**
      * Obfuscate resourceTable.

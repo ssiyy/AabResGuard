@@ -39,6 +39,7 @@ dependencies {
 
     annotationProcessor "com.google.auto.value:auto-value:1.5.2"
     implementation "com.google.auto.value:auto-value:1.5.2"
+    shadow group: "org.sejda.imageio", name: "webp-imageio", version: "0.1.6"
     shadow group: 'org.dom4j', name: 'dom4j', version: '2.1.0'
     shadow deps.bundletool
 
@@ -66,7 +67,9 @@ shadowJar {
     version = versions[ARTIFACT_ID]
     classifier = ''
 
-    minimize()
+    minimize {
+        exclude(dependency('org.sejda.imageio:.*:.*'))
+    }
 
     from sourceSets.main.output
     configurations = [

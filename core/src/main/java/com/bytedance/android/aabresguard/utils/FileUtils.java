@@ -2,13 +2,17 @@ package com.bytedance.android.aabresguard.utils;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
+
+import org.gradle.internal.impldep.org.apache.http.util.TextUtils;
 
 /**
  * Created by YangJing on 2019/10/18 .
@@ -35,5 +39,40 @@ public class FileUtils {
     public static void writeToFile(File file, String content) throws IOException {
         Files.createParentDirs(file);
         Files.asCharSink(file, StandardCharsets.UTF_8).write(content);
+    }
+
+    /**
+     * 获取后缀
+     * @param url
+     * @return
+     */
+    public static String getFileExtensionFromUrl(String url) {
+        if (!Strings.isNullOrEmpty(url)) {
+            int fragment = url.lastIndexOf('#');
+            if (fragment > 0) {
+                url = url.substring(0, fragment);
+            }
+
+            int query = url.lastIndexOf('?');
+            if (query > 0) {
+                url = url.substring(0, query);
+            }
+
+            int filenamePos = url.lastIndexOf('/');
+            String filename =
+                    0 <= filenamePos ? url.substring(filenamePos + 1) : url;
+
+            // if the filename contains special characters, we don't
+            // consider it valid for our matching purposes:
+            if (!filename.isEmpty() &&
+                    Pattern.matches("[a-zA-Z_0-9\\.\\-\\(\\)\\%]+", filename)) {
+                int dotPos = filename.lastIndexOf('.');
+                if (0 <= dotPos) {
+                    return filename.substring(dotPos + 1);
+                }
+            }
+        }
+
+        return "";
     }
 }

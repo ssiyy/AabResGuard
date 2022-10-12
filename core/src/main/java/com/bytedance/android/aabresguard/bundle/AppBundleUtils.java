@@ -57,6 +57,12 @@ public class AppBundleUtils {
         return bytes;
     }
 
+    public static InputStream readInputStream(ZipFile bundleZipFile, ModuleEntry entry, BundleModule bundleModule) throws IOException {
+        String path = String.format("%s/%s", bundleModule.getName().getName(), entry.getPath().toString());
+        ZipEntry bundleConfigEntry = bundleZipFile.getEntry(path);
+       return BufferedIo.inputStream(bundleZipFile, bundleConfigEntry);
+    }
+
     public static String bytesToHexString(byte[] src) {
         if (src.length <= 0) {
             return "";
