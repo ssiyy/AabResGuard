@@ -18,6 +18,8 @@ import com.android.tools.build.bundletool.model.ModuleEntry;
 import com.android.tools.build.bundletool.model.ResourceTableEntry;
 import com.android.tools.build.bundletool.model.ZipPath;
 import com.android.tools.build.bundletool.model.utils.ResourcesUtils;
+import com.android.tools.build.bundletool.model.utils.xmlproto.XmlProtoElementBuilder;
+import com.android.tools.build.bundletool.model.utils.xmlproto.XmlProtoNode;
 import com.bytedance.android.aabresguard.bundle.AppBundleUtils;
 import com.bytedance.android.aabresguard.bundle.ResourcesTableBuilder;
 import com.bytedance.android.aabresguard.bundle.ResourcesTableOperation;
@@ -28,8 +30,6 @@ import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
-import com.bytedance.android.aabresguard.utils.xml.XMLMinificationHelper;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.IOUtils;
@@ -40,7 +40,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -308,26 +307,42 @@ public class ResourcesObfuscator {
         String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
         try {
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
-                BufferedImage bii = obfuscatorRandomPixel(inputStream);
-              //  System.err.println("图片被处理：" + bundleRawPath);
+                BufferedImage bii = obfuscatorRandomPixel(bundleRawPath, inputStream);
                 return bufferedImageToByteArray(bii, extension);
             } else if (extension.endsWith("xml")) {
-                System.err.println("xml被处理：" + bundleRawPath);
-                return obfuscatorXml(inputStream);
+                return obfuscatorXml(bundleRawPath,inputStream);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         byte[] bytes = IOUtils.toByteArray(inputStream);
         inputStream.close();
         return bytes;
     }
 
-    private byte[] obfuscatorXml(InputStream inputStream) throws IOException {
+    private byte[] obfuscatorXml(String rawPath, InputStream inputStream) throws IOException {
         byte[] bytes = IOUtils.toByteArray(inputStream);
         inputStream.close();
-       return XMLMinificationHelper.minify(bytes);
+        try {
+            Resources.XmlNode xmlNode = Resources.XmlNode.parseFrom(bytes);
+            XmlProtoNode xml = new XmlProtoNode(xmlNode);
+            XmlProtoElementBuilder element = xml.toBuilder().getElement();
 
+            String prefix = "magic_minify" + new Random().nextInt(9999);
+            String RES_AUTO_NS = "http://schemas.android.com/apk/res-auto";
+            resourcesMapping.putXmlMapping(rawPath, prefix + ":" + RES_AUTO_NS);
+            return xml.toBuilder().setElement(element.addNamespaceDeclaration(prefix, RES_AUTO_NS))
+                    .build()
+                    .getProto()
+                    .toByteArray();
+        } catch (Exception e) {
+            resourcesMapping.putXmlMapping(rawPath, e.getMessage());
+            System.err.println(rawPath);
+            e.printStackTrace();
+        }
+
+        return bytes;
     }
 
 
@@ -337,7 +352,7 @@ public class ResourcesObfuscator {
      * @param inputStream
      * @return
      */
-    private BufferedImage obfuscatorRandomPixel(InputStream inputStream) {
+    private BufferedImage obfuscatorRandomPixel(String rawPath, InputStream inputStream) {
         try {
             BufferedImage imgsrc = ImageIO.read(inputStream);
             int width = imgsrc.getWidth();
@@ -359,9 +374,12 @@ public class ResourcesObfuscator {
             }
             color = new Color(red, green, color.getBlue());
             imgsrc.setRGB(w, h, color.getRGB());
+            resourcesMapping.putImageMapping(rawPath, w, h, color);
             return imgsrc;
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println(rawPath);
+            resourcesMapping.putImageMapping(rawPath, -1, -1, null);
             return null;
         }
     }

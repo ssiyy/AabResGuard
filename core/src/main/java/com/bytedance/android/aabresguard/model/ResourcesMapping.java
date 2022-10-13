@@ -1,5 +1,6 @@
 package com.bytedance.android.aabresguard.model;
 
+import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,6 +23,16 @@ public class ResourcesMapping {
 
     private Map<String, String> resourcesNameToIdMapping = new HashMap<>();
     private Map<String, String> resourcesPathToIdMapping = new HashMap<>();
+
+    /**
+     * 图片随机加像素点
+     */
+    private Map<String, String> imageMapping = new HashMap<>();
+
+    /**
+     * xml文件随机加命名空间
+     */
+    private Map<String, String> xmlMapping = new HashMap<>();
 
     public ResourcesMapping() {
     }
@@ -59,6 +70,18 @@ public class ResourcesMapping {
 
     public void putEntryFileMapping(String rawPath, String obfuscatedPath) {
         entryFilesMapping.put(rawPath, obfuscatedPath);
+    }
+
+    public void putImageMapping(String rawPath, int x, int y, Color color) {
+        if (color != null) {
+            imageMapping.put(rawPath, "(" + x + "," + y + "),rgb:" + color.getRed() + "," + color.getGreen() + "," + color.getBlue() + "");
+        } else {
+            imageMapping.put(rawPath, "转换出错");
+        }
+    }
+
+    public void putXmlMapping(String rawPath, String namespace) {
+        xmlMapping.put(rawPath, namespace);
     }
 
     public List<String> getPathMappingNameList() {
@@ -116,6 +139,30 @@ public class ResourcesMapping {
             writer.write(String.format(
                     "\t%s : %s -> %s\n",
                     resourcesPathToIdMapping.get(entry.getKey()),
+                    entry.getKey(),
+                    entry.getValue()
+            ));
+        }
+        writer.write("\n\n");
+        writer.flush();
+
+        // write image mapping
+        writer.write("res image mapping :\n");
+        for (Map.Entry<String, String> entry : imageMapping.entrySet()) {
+            writer.write(String.format(
+                    "\t%s  -> %s\n",
+                    entry.getKey(),
+                    entry.getValue()
+            ));
+        }
+        writer.write("\n\n");
+        writer.flush();
+
+        // write xml mapping
+        writer.write("res xmlMapping mapping :\n");
+        for (Map.Entry<String, String> entry : xmlMapping.entrySet()) {
+            writer.write(String.format(
+                    "\t%s  -> %s\n",
                     entry.getKey(),
                     entry.getValue()
             ));
