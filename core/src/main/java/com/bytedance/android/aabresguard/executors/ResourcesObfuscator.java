@@ -28,6 +28,8 @@ import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
+import com.bytedance.android.aabresguard.utils.xml.XMLMinificationHelper;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.IOUtils;
@@ -38,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -306,10 +309,11 @@ public class ResourcesObfuscator {
         try {
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
                 BufferedImage bii = obfuscatorRandomPixel(inputStream);
-                System.err.println("图片被处理：" + bundleRawPath);
+              //  System.err.println("图片被处理：" + bundleRawPath);
                 return bufferedImageToByteArray(bii, extension);
             } else if (extension.endsWith("xml")) {
-
+                System.err.println("xml被处理：" + bundleRawPath);
+                return obfuscatorXml(inputStream);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -319,13 +323,21 @@ public class ResourcesObfuscator {
         return bytes;
     }
 
+    private byte[] obfuscatorXml(InputStream inputStream) throws IOException {
+        byte[] bytes = IOUtils.toByteArray(inputStream);
+        inputStream.close();
+       return XMLMinificationHelper.minify(bytes);
+
+    }
+
+
     /**
      * 混淆随机像素点
      *
      * @param inputStream
      * @return
      */
-    public static BufferedImage obfuscatorRandomPixel(InputStream inputStream) {
+    private BufferedImage obfuscatorRandomPixel(InputStream inputStream) {
         try {
             BufferedImage imgsrc = ImageIO.read(inputStream);
             int width = imgsrc.getWidth();
@@ -360,7 +372,7 @@ public class ResourcesObfuscator {
      * @param image
      * @return
      */
-    public byte[] bufferedImageToByteArray(BufferedImage image, String extension) throws IOException {
+    private byte[] bufferedImageToByteArray(BufferedImage image, String extension) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ImageIO.write(image, extension, os);
         byte[] b = os.toByteArray();
