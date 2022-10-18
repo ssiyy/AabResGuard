@@ -38,6 +38,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -282,7 +283,8 @@ public class ResourcesObfuscator {
                 ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
-                obfuscateEntries.add(entry);
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(bundleRawPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
+                obfuscateEntries.add(obfuscatedEntry);
             }
         }
         builder.setRawEntries(obfuscateEntries);
@@ -310,7 +312,9 @@ public class ResourcesObfuscator {
                 BufferedImage bii = obfuscatorRandomPixel(bundleRawPath, inputStream);
                 return bufferedImageToByteArray(bii, extension);
             } else if (extension.endsWith("xml")) {
-                return obfuscatorXml(bundleRawPath,inputStream);
+                return obfuscatorXml(bundleRawPath, inputStream);
+            } else if (extension.endsWith("so")) {
+                obfuscateSo(bundleRawPath, inputStream);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -318,6 +322,27 @@ public class ResourcesObfuscator {
 
         byte[] bytes = IOUtils.toByteArray(inputStream);
         inputStream.close();
+        return bytes;
+    }
+
+    private byte[] obfuscateSo(String rawPath, InputStream inputStream) throws IOException {
+        byte[] bytes = IOUtils.toByteArray(inputStream);
+        inputStream.close();
+
+        File file = new File("so_temp");
+        if (file.exists()) {
+            file.delete();
+        }
+        file.mkdirs();
+
+        String soName = FileUtils.getFileName(rawPath);
+        File soFile = new File(file,soName);
+        FileOutputStream fos = new FileOutputStream(soFile);
+
+        IOUtils.write(bytes, fos);
+
+
+      ///  System.err.println("jjjjjjjjjjjjjjjjjjjjjjjjjjjj:"+Clibrary.INSTANTCE.elf_parse(soFile.getAbsolutePath()));
         return bytes;
     }
 

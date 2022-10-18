@@ -37,11 +37,17 @@ dependencies {
     shadow 'commons-codec:commons-codec:1.5'
     shadow "com.google.guava:guava:27.0.1-jre"
 
+    shadow "org.jdom:jdom:2.0.2"
+
     annotationProcessor "com.google.auto.value:auto-value:1.5.2"
     implementation "com.google.auto.value:auto-value:1.5.2"
     shadow group: "org.sejda.imageio", name: "webp-imageio", version: "0.1.6"
     shadow "com.googlecode.htmlcompressor:htmlcompressor:1.5.2"
     shadow group: 'org.dom4j', name: 'dom4j', version: '2.1.0'
+
+    shadow "org.apache.commons:commons-collections4:4.3"
+
+    shadow "com.sun.jna:jna:3.0.9"
 
     shadow deps.bundletool
 
@@ -71,6 +77,7 @@ shadowJar {
 
     minimize {
         exclude(dependency('org.sejda.imageio:.*:.*'))
+        exclude(dependency('com.sun.jna:.*:.*'))
     }
 
     from sourceSets.main.output

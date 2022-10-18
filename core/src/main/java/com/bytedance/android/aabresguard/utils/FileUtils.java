@@ -1,5 +1,7 @@
 package com.bytedance.android.aabresguard.utils;
 
+import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -9,10 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
-
-import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
-
-import org.gradle.internal.impldep.org.apache.http.util.TextUtils;
 
 /**
  * Created by YangJing on 2019/10/18 .
@@ -74,5 +72,16 @@ public class FileUtils {
         }
 
         return "";
+    }
+
+    /**
+     * Gets the file name in a pathname, AKA its last element.
+     *
+     * @param path A path.
+     * @return The last element of the path, possibly the entire path for root paths.
+     */
+    public static String getFileName(String path) {
+        int start = path.replace('\\', '/').lastIndexOf("/") + 1;
+        return path.substring(start, path.length());
     }
 }
