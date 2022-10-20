@@ -330,7 +330,7 @@ public class ResourcesObfuscator {
             XmlProtoElementBuilder element = xml.toBuilder().getElement();
 
             String prefix = "magic_minify" + new Random().nextInt(9999);
-            String RES_AUTO_NS = "http://schemas.android.com/tools";
+            String RES_AUTO_NS = "http://schemas.android.com/apk/res-auto";
             resourcesMapping.putXmlMapping(rawPath, prefix + ":" + RES_AUTO_NS);
             return xml.toBuilder().setElement(element.addNamespaceDeclaration(prefix, RES_AUTO_NS))
                     .build()
