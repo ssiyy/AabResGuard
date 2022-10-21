@@ -116,9 +116,8 @@ public class FSUtilities {
 			sb.append('%').append(hexdigit[c >> 4]).append(hexdigit[c & 0x0f]);
 			return;
 		}
-
-
-		sb.append(URLEncoder.encode("" + c, StandardCharsets.UTF_8));
+//todo --------------------
+		sb.append(URLEncoder.encode("" + c));
 	}
 
 

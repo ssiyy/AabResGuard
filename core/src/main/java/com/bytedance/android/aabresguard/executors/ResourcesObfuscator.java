@@ -30,9 +30,11 @@ import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
+import com.bytedance.android.aabresguard.utils.elf.BigEndianDataConverter;
 import com.bytedance.android.aabresguard.utils.elf.ByteArrayProvider;
-import com.bytedance.android.aabresguard.utils.elf.ElfException;
 import com.bytedance.android.aabresguard.utils.elf.ElfHeader;
+import com.bytedance.android.aabresguard.utils.elf.ElfSectionHeader;
+import com.bytedance.android.aabresguard.utils.elf.LittleEndianDataConverter;
 import com.bytedance.android.aabresguard.utils.elf.RethrowContinuesFactory;
 import com.google.common.collect.ImmutableMap;
 
@@ -45,6 +47,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -318,7 +321,7 @@ public class ResourcesObfuscator {
             } else if (extension.endsWith("xml")) {
                 return obfuscatorXml(bundleRawPath, inputStream);
             } else if (extension.endsWith("so")) {
-                obfuscateSo(bundleRawPath, inputStream);
+                return obfuscateSo(bundleRawPath, inputStream);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -340,18 +343,38 @@ public class ResourcesObfuscator {
         file.mkdirs();
 
         String soName = FileUtils.getFileName(rawPath);
-        File soFile = new File(file,soName);
+        File soFile = new File(file, soName);
         FileOutputStream fos = new FileOutputStream(soFile);
         IOUtils.write(bytes, fos);
 
         try {
-            ElfHeader elfHeader =   ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE,new ByteArrayProvider(bytes));
+            ElfHeader elfHeader = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, new ByteArrayProvider(bytes));
             elfHeader.parse();
-            String[] names = elfHeader.getDynamicLibraryNames();
-            for (String name:names){
-                System.err.println("jjjjjjjjjjjjjjjjjjjjjjjjjjjj:"+name);
+
+            ElfSectionHeader[] x = elfHeader.getSections();
+            for (ElfSectionHeader header : x) {
+                String name = header.getNameAsString();
+                int shName = header.getName();
+                String type = header.getTypeAsString();
+                if (Objects.equals(name,".obdata")){
+                    header.setName(".hahaha");
+                }
+                System.err.println("Header:" + header.getNameAsString() +"-sh_name:" +shName+"-type:" + type);
             }
-        } catch (ElfException e) {
+
+          /*  elfHeader.addSection(".hanee",0);
+            File obDir = new File(file,"obfuscator");
+            if (obDir.exists()){
+                obDir.delete();
+            }
+            obDir.mkdirs();
+            File obFile = new File(obDir,"ob_"+soName);*/
+            RandomAccessFile rfile = new RandomAccessFile(soFile ,"rw");
+            elfHeader.write(rfile,elfHeader.isBigEndian()? BigEndianDataConverter.INSTANCE: LittleEndianDataConverter.INSTANCE);
+
+
+        } catch (Exception e) {
+            System.err.println("xxxxxxxxxxxxxxxxxxxxxxxxxx:"+e.getMessage());
             e.printStackTrace();
         }
 
