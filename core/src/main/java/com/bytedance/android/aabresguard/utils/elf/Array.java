@@ -15,9 +15,6 @@
  */
 package com.bytedance.android.aabresguard.utils.elf;
 
-import ghidra.docking.settings.Settings;
-import ghidra.program.model.mem.MemBuffer;
-
 /**
  * Array interface
  */
@@ -46,111 +43,6 @@ public interface Array extends DataType {
 	 */
 	DataType getDataType();
 
-	/**
-	 * Get the appropriate string to use as the label prefix
-	 * for an array, taking into account the actual data at the memory location.
-	 * <p>
-	 * See also {@link #getDefaultLabelPrefix()}
-	 * 
-	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param len the length of the data.
-	 * @param options options for how to format the default label prefix.
-	 * @return the label prefix or null if not applicable
-	 */
-	default public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
-			DataTypeDisplayOptions options) {
-		ArrayStringable stringableElementType = ArrayStringable.getArrayStringable(getDataType());
-		String prefix = (stringableElementType != null)
-				? stringableElementType.getArrayDefaultLabelPrefix(buf, settings, len, options)
-				: null;
-		return (prefix != null) ? prefix : getDefaultLabelPrefix();
-	}
-
-	/**
-	 * Get the appropriate string to use as the offcut label prefix for an array, taking into
-	 * account the actual data at the memory location.
-	 * <p>
-	 * See also {@link #getDefaultLabelPrefix()}
-	 * 
-	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param len the length of the data.
-	 * @param options options for how to format the default label prefix.
-	 * @param offcutLength offcut offset from start of buf
-	 * @return the offcut label prefix or null if not applicable
-	 */
-	default public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings,
-			int len, DataTypeDisplayOptions options, int offcutLength) {
-
-		ArrayStringable stringableElementType = ArrayStringable.getArrayStringable(getDataType());
-		String prefix = (stringableElementType != null)
-				? stringableElementType.getArrayDefaultOffcutLabelPrefix(buf, settings, len,
-					options, offcutLength)
-				: null;
-		return (prefix != null) ? prefix : getDefaultLabelPrefix(buf, settings, len, options);
-	}
-
-	/**
-	 * Get the representation which corresponds to an array in memory.  This will either be a
-	 * String for the ArrayStringable case, "??" for uninitialized data,
-	 * or the empty string if it is not.
-	 * 
-	 * @param buf data buffer
-	 * @param settings data settings
-	 * @param length length of array
-	 * @return a String if it is an array of chars; otherwise empty string, never null.
-	 */
-	default public String getArrayRepresentation(MemBuffer buf, Settings settings, int length) {
-		if (getNumElements() == 0) {
-			return "";
-		}
-		if (!buf.isInitializedMemory()) {
-			return StringDataInstance.UNKNOWN;
-		}
-		ArrayStringable stringableElementType = ArrayStringable.getArrayStringable(getDataType());
-		String value =
-			(stringableElementType != null && stringableElementType.hasStringValue(settings))
-					? new StringDataInstance(stringableElementType, settings, buf, length,
-						true).getStringRepresentation()
-					: null;
-		return (value != null) ? value : "";
-	}
-
-	/**
-	 * Get the value object which corresponds to an array in memory.  This will either be a
-	 * String for the ArrayStringable case or null.
-	 * 
-	 * @param buf data buffer
-	 * @param settings data settings
-	 * @param length length of array
-	 * @return a String if it is an array of chars; otherwise null.
-	 */
-	default Object getArrayValue(MemBuffer buf, Settings settings, int length) {
-		if (!buf.getMemory().getAllInitializedAddressSet().contains(buf.getAddress())) {
-			return null;
-		}
-		ArrayStringable as = ArrayStringable.getArrayStringable(getDataType());
-		Object value = (as != null) ? as.getArrayString(buf, settings, length) : null;
-
-		return value;
-		// TODO
-		// For large array it is not scalable to create a java array object.  Perhaps
-		// we could create a GhidraArray that can dish out objects.
-//			DataType dt = arrayDt.getDataType();
-//			Class<?> valueClass = dt.getValueClass(settings);
-//			if (valueClass != null) {
-//				int count = arrayDt.getNumElements();
-//				int elementLength = arrayDt.getElementLength();
-//				WrappedMemBuffer wrappedBuffer = new WrappedMemBuffer(buf, 0);
-//				Object[] array = (Object[]) java.lang.reflect.Array.newInstance(valueClass, count);
-//				for (int i = 0; i < count; i++) {
-//					wrappedBuffer.setBaseOffset(i * elementLength);
-//					array[i] = dt.getValue(wrappedBuffer, settings, elementLength);
-//				}
-//				return array;
-//			}
-	}
 
 	/**
 	 * Get the value Class of a specific arrayDt with settings

@@ -44,11 +44,6 @@ public class EmptyByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public FSRL getFSRL() {
-		return fsrl;
-	}
-
-	@Override
 	public File getFile() {
 		return null;
 	}
@@ -101,7 +96,7 @@ public class EmptyByteProvider implements ByteProvider {
 		if (index != 0) {
 			throw new IOException("Invalid offset");
 		}
-		return InputStream.nullInputStream();
+		return Utils.nullInputStream();
 	}
 
 

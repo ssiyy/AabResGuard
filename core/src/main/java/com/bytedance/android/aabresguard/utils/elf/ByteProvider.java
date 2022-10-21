@@ -17,8 +17,6 @@ package com.bytedance.android.aabresguard.utils.elf;
 
 import java.io.*;
 
-import ghidra.formats.gfilesystem.FSRL;
-import ghidra.formats.gfilesystem.FileSystemService;
 
 /**
  * An interface for a generic random-access byte provider.
@@ -30,17 +28,7 @@ public interface ByteProvider extends Closeable {
 	 */
 	public static final ByteProvider EMPTY_BYTEPROVIDER = new EmptyByteProvider();
 
-	/**
-	 * Returns the {@link FSRL} of the underlying file for this byte provider,
-	 * or null if this byte provider is not associated with a file.
-	 * 
-	 * @return The {@link FSRL} of the underlying {@link File}, or null if no associated 
-	 *   {@link File}.
-	 */
-	default public FSRL getFSRL() {
-		File f = getFile();
-		return (f != null) ? FileSystemService.getInstance().getLocalFSRL(f) : null;
-	}
+
 
 	/**
 	 * Returns the underlying {@link File} for this {@link ByteProvider}, or null if this 

@@ -30,6 +30,10 @@ import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
+import com.bytedance.android.aabresguard.utils.elf.ByteArrayProvider;
+import com.bytedance.android.aabresguard.utils.elf.ElfException;
+import com.bytedance.android.aabresguard.utils.elf.ElfHeader;
+import com.bytedance.android.aabresguard.utils.elf.RethrowContinuesFactory;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.IOUtils;
@@ -338,11 +342,20 @@ public class ResourcesObfuscator {
         String soName = FileUtils.getFileName(rawPath);
         File soFile = new File(file,soName);
         FileOutputStream fos = new FileOutputStream(soFile);
-
         IOUtils.write(bytes, fos);
 
+        try {
+            ElfHeader elfHeader =   ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE,new ByteArrayProvider(bytes));
+            elfHeader.parse();
+            String[] names = elfHeader.getDynamicLibraryNames();
+            for (String name:names){
+                System.err.println("jjjjjjjjjjjjjjjjjjjjjjjjjjjj:"+name);
+            }
+        } catch (ElfException e) {
+            e.printStackTrace();
+        }
 
-      ///  System.err.println("jjjjjjjjjjjjjjjjjjjjjjjjjjjj:"+Clibrary.INSTANTCE.elf_parse(soFile.getAbsolutePath()));
+
         return bytes;
     }
 

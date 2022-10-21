@@ -16,7 +16,6 @@
 package com.bytedance.android.aabresguard.utils.elf;
 
 import java.math.BigInteger;
-import java.util.Objects;
 
 /**
  * 
@@ -39,14 +38,14 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public short getShort(byte[] b, int offset) {
-		Objects.checkFromIndexSize(offset, Short.BYTES, b.length);
+		//Objects.checkFromIndexSize(offset, Short.BYTES, b.length);
 
 		return (short) (((b[offset + 1] & 0xff) << 8) | (b[offset] & 0xff));
 	}
 
 	@Override
 	public int getInt(byte[] b, int offset) {
-		Objects.checkFromIndexSize(offset, Integer.BYTES, b.length);
+		//Objects.checkFromIndexSize(offset, Integer.BYTES, b.length);
 
 		int v = b[offset + 3];
 		for (int i = 2; i >= 0; i--) {
@@ -57,7 +56,7 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public long getLong(byte[] b, int offset) {
-		Objects.checkFromIndexSize(offset, Long.BYTES, b.length);
+	//	Objects.checkFromIndexSize(offset, Long.BYTES, b.length);
 
 		long v = b[offset + 7];
 		for (int i = 6; i >= 0; i--) {
@@ -68,8 +67,8 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public long getValue(byte[] b, int offset, int size) {
-		Objects.checkFromIndexSize(offset, size, b.length);
-		Objects.checkIndex(size, Long.BYTES + 1);
+	//	Objects.checkFromIndexSize(offset, size, b.length);
+	//	Objects.checkIndex(size, Long.BYTES + 1);
 
 		long val = 0;
 		for (int i = size - 1; i >= 0; i--) {
@@ -80,7 +79,7 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public BigInteger getBigInteger(byte[] b, int offset, int size, boolean signed) {
-		Objects.checkFromIndexSize(offset, size, b.length);
+	//	Objects.checkFromIndexSize(offset, size, b.length);
 
 		int msbIndex = 0;
 		if (!signed) {
@@ -98,7 +97,7 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public void putShort(byte[] b, int offset, short value) {
-		Objects.checkFromIndexSize(offset, Short.BYTES, b.length);
+	//	Objects.checkFromIndexSize(offset, Short.BYTES, b.length);
 
 		b[offset + 1] = (byte) (value >> 8);
 		b[offset] = (byte) (value & 0xff);
@@ -106,7 +105,7 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public void putInt(byte[] b, int offset, int value) {
-		Objects.checkFromIndexSize(offset, Integer.BYTES, b.length);
+	//	Objects.checkFromIndexSize(offset, Integer.BYTES, b.length);
 
 		b[offset] = (byte) (value);
 		for (int i = 1; i < 4; i++) {
@@ -117,8 +116,8 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public void putValue(long value, int size, byte[] b, int offset) {
-		Objects.checkFromIndexSize(offset, size, b.length);
-		Objects.checkIndex(size, Long.BYTES + 1);
+	//	Objects.checkFromIndexSize(offset, size, b.length);
+	//	Objects.checkIndex(size, Long.BYTES + 1);
 
 		for (int i = 0; i < size; i++) {
 			b[offset + i] = (byte) value;
@@ -128,7 +127,7 @@ public class LittleEndianDataConverter implements DataConverter {
 
 	@Override
 	public void putBigInteger(byte[] b, int offset, int size, BigInteger value) {
-		Objects.checkFromIndexSize(offset, size, b.length);
+	//	Objects.checkFromIndexSize(offset, size, b.length);
 
 		int fillIndex = offset + size - 1; // start fill from MSB
 		int srcIndex;

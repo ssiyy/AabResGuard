@@ -15,12 +15,9 @@
  */
 package com.bytedance.android.aabresguard.utils.elf;
 
-import java.util.*;
-
-import ghidra.util.InvalidNameException;
-import ghidra.util.UniversalID;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Interface for Managing data types.
@@ -75,42 +72,10 @@ public interface DataTypeManager {
 	 */
 	public String getUniqueName(CategoryPath path, String baseName);
 
-	/**
-	 * Returns a dataType that is "in" (ie suitable implementation) this
-	 * Manager, creating a new one if necessary.  Also the returned dataType
-	 * will be in a category in this dataTypeManager that is equivalent to the
-	 * category of the passed in dataType.
-	 * @param dataType the dataType to be resolved.
-	 * @param handler used to resolve conflicts with existing dataTypes.
-	 * @return an equivalent dataType that "belongs" to this dataTypeManager.
-	 */
-	public DataType resolve(DataType dataType, DataTypeConflictHandler handler);
 
-	/**
-	 * Returns a data type after adding it to this data manager.
-	 * The returned dataType will be in a category in this dataTypeManager
-	 * that is equivalent to the category of the passed in dataType.
-	 *
-	 * @param dataType the dataType to be resolved.
-	 * @param handler used to resolve conflicts with existing dataTypes.
-	 * @return an equivalent dataType that "belongs" to this dataTypeManager.
-	 */
-	public DataType addDataType(DataType dataType, DataTypeConflictHandler handler);
 
-	/**
-	 * Sequentially adds a collection of datatypes to this data manager.
-	 * This method provides the added benefit of equivalence caching
-	 * for improved performance.
-	 * <br>
-	 * WARNING: This is an experimental method whose use may cause the GUI and
-	 * task monitor to become unresponsive due to extended hold times on the manager lock.
-	 * @param dataTypes collection of datatypes
-	 * @param handler conflict handler
-	 * @param monitor task monitor
-	 * @throws CancelledException if monitor is cancelled
-	 */
-	public void addDataTypes(Collection<DataType> dataTypes, DataTypeConflictHandler handler,
-			TaskMonitor monitor) throws CancelledException;
+
+
 
 	/**
 	 * Returns an iterator over all the dataTypes in this manager
@@ -125,11 +90,7 @@ public interface DataTypeManager {
 	 */
 	public void getAllDataTypes(List<DataType> list);
 
-	/**
-	 * Returns an iterator over all structures in this manager
-	 * @return the iterator
-	 */
-	public Iterator<Structure> getAllStructures();
+
 
 	/**
 	 * Returns an iterator over all composite data types (structures and unions) in this manager
@@ -146,30 +107,9 @@ public interface DataTypeManager {
 	 */
 	public void findDataTypes(String name, List<DataType> list);
 
-	/**
-	 * Begin searching at the root category for all data types with names
-	 * that match the given name that may contain wildcards.
-	 * @param name name to match; may contain wildcards
-	 * @param list list that will be populated with matching DataType objects
-	 * @param caseSensitive true if the match is case sensitive
-	 * @param monitor task monitor to cancel the search
-	 */
-	public void findDataTypes(String name, List<DataType> list, boolean caseSensitive,
-			TaskMonitor monitor);
 
-	/**
-	 * Replace an existing dataType with another.  All instances and references will be updated to
-	 * use the replacement dataType.
-	 * @param existingDt the dataType to be replaced.
-	 * @param replacementDt the dataType to use as the replacement.
-	 * @param updateCategoryPath if true, the replacementDt will have its categoryPath changed
-	 * to the exitingDt's path.
-	 * @return the resolved replacement dataType.
-	 * @throws DataTypeDependencyException if the replacement datatype depends on
-	 * the existing dataType;
-	 */
-	public DataType replaceDataType(DataType existingDt, DataType replacementDt,
-			boolean updateCategoryPath) throws DataTypeDependencyException;
+
+
 
 	/**
 	 * Retrieve the data type with the fully qualified path. So you can get the data named
@@ -230,47 +170,7 @@ public interface DataTypeManager {
 	 */
 	public DataType getDataType(long dataTypeID);
 
-	/**
-	 * Returns the Category with the given id
-	 *
-	 * @param categoryID id of the desired category
-	 * @return the category
-	 */
-	public Category getCategory(long categoryID);
 
-	/**
-	 * Get the category that has the given path
-	 *
-	 * @param path the path
-	 * @return the category if defined, otherwise null
-	 */
-	public Category getCategory(CategoryPath path);
-
-	/**
-	 * Add a listener that is notified when the dataTypeManger changes.
-	 * @param l the listener
-	 */
-	public void addDataTypeManagerListener(DataTypeManagerChangeListener l);
-
-	/**
-	 * Remove the DataTypeManger change listener.
-	 * @param l the listener
-	 */
-	public void removeDataTypeManagerListener(DataTypeManagerChangeListener l);
-
-	/**
-	 * Adds a listener that will be notified when this manager's cache is invalidated.  This will
-	 * happen when the system has changed and the manager cannot determine the exact change, like
-	 * during an undo or a redo.
-	 * @param listener The listener to add
-	 */
-	public void addInvalidatedListener(InvalidatedListener listener);
-
-	/**
-	 * Removes a previously added InvalidatedListener
-	 * @param listener the listener to remove.
-	 */
-	public void removeInvalidatedListener(InvalidatedListener listener);
 
 	/**
 	 * Remove the given datatype from this manager
@@ -278,7 +178,7 @@ public interface DataTypeManager {
 	 * @param monitor the task monitor
 	 * @return true if the data type existed and was removed
 	 */
-	public boolean remove(DataType dataType, TaskMonitor monitor);
+//	public boolean remove(DataType dataType, TaskMonitor monitor);
 
 	/**
 	 * Return true if the given dataType exists in this data type manager
@@ -288,13 +188,7 @@ public interface DataTypeManager {
 	 */
 	public boolean contains(DataType dataType);
 
-	/**
-	 * Create a category for the given path; returns the current category if it already exits
-	 *
-	 * @param path the path
-	 * @return the category
-	 */
-	public Category createCategory(CategoryPath path);
+
 
 	/**
 	 * Gets the data type with the indicated name in the indicated category.
@@ -368,11 +262,6 @@ public interface DataTypeManager {
 	 */
 	public Pointer getPointer(DataType datatype, int size);
 
-	/**
-	 * Returns the root category Manager
-	 * @return the category
-	 */
-	public Category getRootCategory();
 
 	/**
 	 * Returns true if the given datatype has been designated as a favorite. If the datatype

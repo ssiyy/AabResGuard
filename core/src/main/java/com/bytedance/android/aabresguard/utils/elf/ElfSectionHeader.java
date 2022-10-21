@@ -18,7 +18,6 @@ package com.bytedance.android.aabresguard.utils.elf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
 
 /**
  * A class to represent the Elf32_Shdr data structure.
@@ -131,7 +130,7 @@ public class ElfSectionHeader implements  Writeable {
 		//checkSize();
 	}
 
-	ElfSectionHeader(ElfHeader header, MemoryBlock block, int sh_name, long imageBase)
+/*	ElfSectionHeader(ElfHeader header, MemoryBlock block, int sh_name, long imageBase)
 			throws MemoryAccessException {
 
 		this.header = header;
@@ -160,7 +159,7 @@ public class ElfSectionHeader implements  Writeable {
 		}
 
 		modified = true;
-	}
+	}*/
 
 	ElfSectionHeader(ElfHeader header, String name, int sh_name, int type) {
 		this.header = header;
@@ -567,29 +566,6 @@ public class ElfSectionHeader implements  Writeable {
 		this.name = name;
 	}
 
-
-
-	private DataType getTypeDataType() {
-
-		HashMap<Integer, ElfSectionHeaderType> sectionHeaderTypeMap =
-			header.getSectionHeaderTypeMap();
-		if (sectionHeaderTypeMap == null) {
-			return DWordDataType.dataType;
-		}
-
-		String dtName = "Elf_SectionHeaderType";
-
-		String typeSuffix = header.getTypeSuffix();
-		if (typeSuffix != null) {
-			dtName = dtName + typeSuffix;
-		}
-
-		EnumDataType typeEnum = new EnumDataType(new CategoryPath("/ELF"), dtName, 4);
-		for (ElfSectionHeaderType type : sectionHeaderTypeMap.values()) {
-			typeEnum.add(type.name, type.value);
-		}
-		return typeEnum;
-	}
 
 	private void checkSize() {
 		if (sh_size > (Integer.MAX_VALUE & Conv.INT_MASK)) {

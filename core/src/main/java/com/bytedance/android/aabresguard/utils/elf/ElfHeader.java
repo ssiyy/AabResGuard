@@ -63,7 +63,6 @@ public class ElfHeader implements  Writeable {
 	private short e_shnum; //number of enties in the section header table
 	private short e_shstrndx; //section index of the section name string table
 
-	private Structure headerStructure;
 
 	private boolean parsed = false;
 	private boolean parsedSectionHeaders = false;
@@ -1713,12 +1712,12 @@ public class ElfHeader implements  Writeable {
 	 * @return the newly created section
 	 * @throws MemoryAccessException if any of the requested memory block bytes are uninitialized.
 	 */
-	public ElfSectionHeader addSection(MemoryBlock block, int sh_name)
+	/*public ElfSectionHeader addSection(MemoryBlock block, int sh_name)
 			throws MemoryAccessException {
 		ElfSectionHeader newSection = new ElfSectionHeader(this, block, sh_name, getImageBase());
 		addSection(newSection);
 		return newSection;
-	}
+	}*/
 
 	/**
 	 * Adds a new section the specifed name and name index.

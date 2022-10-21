@@ -15,8 +15,7 @@
  */
 package com.bytedance.android.aabresguard.utils.elf;
 
-import ghidra.docking.settings.Settings;
-import ghidra.util.exception.DuplicateNameException;
+
 
 /**
  * DataTypeComponents are holders for the dataTypes that make up composite (Structures
@@ -116,21 +115,6 @@ public interface DataTypeComponent {
 	 * the specified field name.
 	 */
 	public void setFieldName(String fieldName) throws DuplicateNameException;
-
-	/**
-	 * Returns a default Field name.  Used only if a field name is not set.
-	 * @return default field name
-	 */
-	public default String getDefaultFieldName() {
-		if (isZeroBitFieldComponent()) {
-			return "";
-		}
-		String name = DEFAULT_FIELD_NAME_PREFIX + getOrdinal();
-		if (getParent() instanceof Structure) {
-			name += "_0x" + Integer.toHexString(getOffset());
-		}
-		return name;
-	}
 
 	/**
 	 * Returns true if the given dataTypeComponent is equivalent to this dataTypeComponent.

@@ -16,12 +16,88 @@
  */
 package com.bytedance.android.aabresguard.utils.elf;
 
-import ghidra.pcodeCPort.context.*;
-import ghidra.sleigh.grammar.Location;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Objects;
 
 public class Utils {
 
-	public static final String endl = System.getProperty( "line.separator" );
+	public static int toUnsignedInt(short x) {
+		return x & '\uffff';
+	}
+
+	public static int compareUnsigned(short x, short y) {
+		return toUnsignedInt(x) - toUnsignedInt(y);
+	}
+
+	public static InputStream nullInputStream() {
+		return new InputStream() {
+			private volatile boolean closed;
+
+			private void ensureOpen() throws IOException {
+				if (this.closed) {
+					throw new IOException("Stream closed");
+				}
+			}
+
+			public int available() throws IOException {
+				this.ensureOpen();
+				return 0;
+			}
+
+			public int read() throws IOException {
+				this.ensureOpen();
+				return -1;
+			}
+
+			public int read(byte[] b, int off, int len) throws IOException {
+				//Objects.checkFromIndexSize(off, len, b.length);
+				if (len == 0) {
+					return 0;
+				} else {
+					this.ensureOpen();
+					return -1;
+				}
+			}
+
+			public byte[] readAllBytes() throws IOException {
+				this.ensureOpen();
+				return new byte[0];
+			}
+
+			public int readNBytes(byte[] b, int off, int len) throws IOException {
+				//Objects.checkFromIndexSize(off, len, b.length);
+				this.ensureOpen();
+				return 0;
+			}
+
+			public byte[] readNBytes(int len) throws IOException {
+				if (len < 0) {
+					throw new IllegalArgumentException("len < 0");
+				} else {
+					this.ensureOpen();
+					return new byte[0];
+				}
+			}
+
+			public long skip(long n) throws IOException {
+				this.ensureOpen();
+				return 0L;
+			}
+
+			public long transferTo(OutputStream out) throws IOException {
+				Objects.requireNonNull(out);
+				this.ensureOpen();
+				return 0L;
+			}
+
+			public void close() throws IOException {
+				this.closed = true;
+			}
+		};
+	}
 	
 	private static long[] uintbmasks = {
 			0, 0xff, 0xffff, 0xffffff, 0xffffffffL, 0xffffffffffL, 0xffffffffffffL,
@@ -246,19 +322,7 @@ public class Utils {
 		}
 		return -1;
 	}
-    public static void calc_maskword( Location location, int sbit, int ebit, MutableInt num, MutableInt shift, MutableInt mask ) {
-        num.set(unsignedDivide(sbit, 8 * 4));
-        if(num.get() != unsignedDivide(ebit, 8 * 4)) {
-            throw new SleighError( "Context field not contained within one machine int", location );            
-        }
-        sbit -= (int) (unsignedInt(num.get()) * 8 * 4);
-        ebit -= (int) (unsignedInt(num.get()) * 8 * 4);
-        
-        shift.set(8 * 4 - ebit - 1);
-        int m = (-1) >>> (sbit + shift.get());
-        m <<= shift.get();
-        mask.set(m);
-    }
+
 	public static int bytesToInt( byte[] bytes, boolean bigEndian ) {
 		int result = 0;
 		if (bigEndian) {

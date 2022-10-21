@@ -15,7 +15,6 @@
  */
 package com.bytedance.android.aabresguard.utils.elf;
 
-import java.util.Objects;
 import java.util.Set;
 
 public interface StringSettingsDefinition extends SettingsDefinition {
@@ -33,17 +32,6 @@ public interface StringSettingsDefinition extends SettingsDefinition {
 	 * @param value the value to store in the settings object using this settingsDefinition as the key.
 	 */
 	public abstract void setValue(Settings settings, String value);
-
-	@Override
-	public default String getValueString(Settings settings) {
-		String str = getValue(settings);
-		return str != null ? str : "";
-	}
-
-	@Override
-	public default boolean hasSameValue(Settings settings1, Settings settings2) {
-		return Objects.equals(getValue(settings1), getValue(settings2));
-	}
 
 	/**
 	 * Get suggested setting values

@@ -48,7 +48,7 @@ public class ClassSearcher {
 
 
 
-	private static ClassFinder searcher;
+
 	private static List<Class<?>> extensionPoints;
 
 	private static WeakSet<ChangeListener> listenerList =

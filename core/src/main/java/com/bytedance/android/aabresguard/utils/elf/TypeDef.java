@@ -50,40 +50,4 @@ public interface TypeDef extends DataType {
 	 */
 	public DataType getBaseDataType();
 
-	/**
-	 * Compare the settings of two datatypes which correspond to a
-	 * {@link TypeDefSettingsDefinition}. 
-	 * <p>
-	 * NOTE: It is required that both datatypes present their settings
-	 * definitions in the same order (see {@link DataType#getSettingsDefinitions})
-	 * to be considered the same.
-	 * @param dt other typedef to compare with
-	 * @return true if both datatypes have the same settings defined 
-	 * which correspond to {@link TypeDefSettingsDefinition} and have the 
-	 * same values, else false. 
-	 */
-	public default boolean hasSameTypeDefSettings(TypeDef dt) {
-		SettingsDefinition[] defs1 = getSettingsDefinitions();
-		SettingsDefinition[] defs2 = dt.getSettingsDefinitions();
-		if (defs1.length != defs2.length) {
-			return false;
-		}
-
-		Settings settings1 = getDefaultSettings();
-		Settings settings2 = dt.getDefaultSettings();
-
-		for (int i = 0; i < defs1.length; i++) {
-			SettingsDefinition def = defs1[i];
-			if (!defs2[i].getClass().equals(def.getClass())) {
-				return false;
-			}
-			if (def instanceof TypeDefSettingsDefinition) {
-				if (!def.hasSameValue(settings1, settings2)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
 }

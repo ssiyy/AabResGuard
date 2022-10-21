@@ -15,130 +15,20 @@
  */
 package com.bytedance.android.aabresguard.utils.elf;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
-
-import ghidra.app.util.NamespaceUtils;
-import ghidra.docking.settings.Settings;
-import ghidra.program.model.address.GlobalNamespace;
-import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
-import ghidra.program.model.listing.Library;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.util.UniversalID;
-import ghidra.util.exception.AssertException;
 
 public class DataTypeUtilities {
 	private static Map<String, DataType> cPrimitiveNameMap = new HashMap<>();
-	static {
-		cPrimitiveNameMap.put("char", CharDataType.dataType);
-		cPrimitiveNameMap.put("signed char", CharDataType.dataType);
-		cPrimitiveNameMap.put("unsigned char", UnsignedCharDataType.dataType);
-		cPrimitiveNameMap.put("short", ShortDataType.dataType);
-		cPrimitiveNameMap.put("short int", ShortDataType.dataType);
-		cPrimitiveNameMap.put("signed short", ShortDataType.dataType);
-		cPrimitiveNameMap.put("signed short int", ShortDataType.dataType);
-		cPrimitiveNameMap.put("unsigned short", UnsignedShortDataType.dataType);
-		cPrimitiveNameMap.put("unsigned short int", UnsignedShortDataType.dataType);
-		cPrimitiveNameMap.put("int", IntegerDataType.dataType);
-		cPrimitiveNameMap.put("signed", IntegerDataType.dataType);
-		cPrimitiveNameMap.put("signed int", IntegerDataType.dataType);
-		cPrimitiveNameMap.put("unsigned", UnsignedIntegerDataType.dataType);
-		cPrimitiveNameMap.put("unsigned int", UnsignedIntegerDataType.dataType);
-		cPrimitiveNameMap.put("long", LongDataType.dataType);
-		cPrimitiveNameMap.put("long int", LongDataType.dataType);
-		cPrimitiveNameMap.put("signed long", LongDataType.dataType);
-		cPrimitiveNameMap.put("signed long int", LongDataType.dataType);
-		cPrimitiveNameMap.put("unsigned long", UnsignedLongDataType.dataType);
-		cPrimitiveNameMap.put("long long", LongLongDataType.dataType);
-		cPrimitiveNameMap.put("long long int", LongLongDataType.dataType);
-		cPrimitiveNameMap.put("signed long long", LongLongDataType.dataType);
-		cPrimitiveNameMap.put("signed long long int", LongLongDataType.dataType);
-		cPrimitiveNameMap.put("unsigned long long", UnsignedLongLongDataType.dataType);
-		cPrimitiveNameMap.put("unsigned long long int", UnsignedLongLongDataType.dataType);
 
-		cPrimitiveNameMap.put("float", FloatDataType.dataType);
-		cPrimitiveNameMap.put("double", DoubleDataType.dataType);
-		cPrimitiveNameMap.put("long double", LongDoubleDataType.dataType);
-	}
 
 	private static final Pattern DATATYPE_CONFLICT_PATTERN =
 		Pattern.compile(Pattern.quote(DataType.CONFLICT_SUFFIX) + "_?[0-9]*");
 
-	public static Collection<DataType> getContainedDataTypes(DataType rootDataType) {
-		HashMap<String, DataType> dataTypeMap = new HashMap<>();
-		Queue<DataType> unprocessedDataTypes = new LinkedList<>();
-		dataTypeMap.put(rootDataType.getPathName(), rootDataType);
-		unprocessedDataTypes.add(rootDataType);
 
-		while (!unprocessedDataTypes.isEmpty()) {
-			DataType dataType = unprocessedDataTypes.remove();
-			List<DataType> directContainedDatatypes = getDirectContainedDatatypes(dataType);
-			for (DataType containedDataType : directContainedDatatypes) {
-				String path = containedDataType.getPathName();
-				if (!dataTypeMap.containsKey(path)) {
-					dataTypeMap.put(path, containedDataType);
-					unprocessedDataTypes.add(containedDataType);
-				}
-			}
-		}
-		return dataTypeMap.values();
-	}
 
-	private static List<DataType> getDirectContainedDatatypes(DataType dt) {
-		List<DataType> list = new ArrayList<>();
-		if (dt instanceof Array) {
-			Array array = (Array) dt;
-			list.add(array.getDataType());
-		}
-		else if (dt instanceof Pointer) {
-			Pointer ptr = (Pointer) dt;
-			DataType ptrDt = ptr.getDataType();
-			if (ptrDt != null) {
-				list.add(ptrDt);
-			}
-		}
-		else if (dt instanceof Composite) {
-			Composite composite = (Composite) dt;
-			int n = composite.getNumComponents();
-			for (int i = 0; i < n; i++) {
-				DataTypeComponent component = composite.getComponent(i);
-				list.add(component.getDataType());
-			}
-		}
-		else if (dt instanceof TypeDef) {
-			TypeDef typedef = (TypeDef) dt;
-			list.add(typedef.getDataType());
-		}
-		else if (dt instanceof java.lang.Enum) {
-			// no-op; prevents assert exception below
-		}
-		else if (dt instanceof FunctionDefinition) {
-			FunctionDefinition funDef = (FunctionDefinition) dt;
-			list.add(funDef.getReturnType());
-			ParameterDefinition[] arguments = funDef.getArguments();
-			for (ParameterDefinition parameter : arguments) {
-				list.add(parameter.getDataType());
-			}
-		}
-		else if (dt instanceof BuiltInDataType) {
-			// no-op; prevents assert exception below
-		}
-		else if (dt instanceof BitFieldDataType) {
-			BitFieldDataType bitFieldDt = (BitFieldDataType) dt;
-			list.add(bitFieldDt.getBaseDataType());
-		}
-		else if (dt instanceof MissingBuiltInDataType) {
-			// no-op; prevents assert exception below
-		}
-		else if (dt.equals(DataType.DEFAULT)) {
-			// no-op; prevents assert exception below
-		}
-		else {
-			throw new AssertException("Unknown data Type:" + dt.getDisplayName());
-		}
-		return list;
-	}
 
 	/**
 	 * Check to see if the second data type is the same as the first data type or is part of it.
@@ -340,19 +230,7 @@ public class DataTypeUtilities {
 	 * @param namespace the namespace
 	 * @return namespace derived category path
 	 */
-	public static CategoryPath getDataTypeCategoryPath(CategoryPath baseCategory,
-			Namespace namespace) {
-		List<String> categoryPathParts = new ArrayList<>();
-		for (Namespace ns : NamespaceUtils.getNamespaceParts(namespace)) {
-			if (ns instanceof Library) {
-				break; // assume the Library is a root and no other categories are above it
-			}
-			categoryPathParts.add(ns.getName());
-		}
-		return categoryPathParts.isEmpty()
-				? baseCategory
-				: new CategoryPath(baseCategory, categoryPathParts);
-	}
+
 
 	/**
 	 * Attempt to find the data type whose dtName and specified namespace match a stored data type
@@ -366,11 +244,7 @@ public class DataTypeUtilities {
 	 * @param classConstraint optional data type interface constraint (e.g., Structure), or null
 	 * @return best matching data type
 	 */
-	public static DataType findDataType(DataTypeManager dataTypeManager, Namespace namespace,
-			String dtName, Class<? extends DataType> classConstraint) {
-		return findDataType(dataTypeManager, dtName, classConstraint,
-			categoryPath -> hasPreferredNamespaceCategory(categoryPath, namespace));
-	}
+
 
 	/**
 	 * Attempt to find the data type whose dtNameWithNamespace match a stored data type within the
@@ -385,15 +259,7 @@ public class DataTypeUtilities {
 	 * @param classConstraint optional data type interface constraint (e.g., Structure), or null
 	 * @return best matching data type
 	 */
-	public static DataType findNamespaceQualifiedDataType(DataTypeManager dataTypeManager,
-			String dtNameWithNamespace, Class<? extends DataType> classConstraint) {
 
-		String[] splitName = dtNameWithNamespace.split(Namespace.DELIMITER);
-		String dtName = splitName[splitName.length - 1];
-
-		return findDataType(dataTypeManager, dtName, classConstraint,
-			dataType -> hasPreferredNamespaceCategory(dataType, splitName));
-	}
 
 	/**
 	 * Return the appropriate datatype for a given C primitive datatype name.
@@ -401,50 +267,6 @@ public class DataTypeUtilities {
 	 * @param dataTypeName the datatype name (e.g. "unsigned int", "long long")
 	 * @return the appropriate datatype for a given C primitive datatype name.
 	 */
-	public static DataType getCPrimitiveDataType(String dataTypeName) {
-		// remove any excess spaces
-		if (dataTypeName.contains(" ")) {
-			dataTypeName = dataTypeName.trim().replaceAll("\\s+", " ");
-		}
-		dataTypeName = dataTypeName.toLowerCase();
-		return cPrimitiveNameMap.get(dataTypeName);
-	}
-
-	private static boolean hasPreferredNamespaceCategory(DataType dataType,
-			String[] splitDataTypeName) {
-		// last element of split array is data type name and is ignored here
-		if (splitDataTypeName.length == 1) {
-			return true;
-		}
-		CategoryPath categoryPath = dataType.getCategoryPath();
-		int index = splitDataTypeName.length - 2;
-		while (index >= 0) {
-			if (categoryPath.equals(CategoryPath.ROOT) ||
-				!categoryPath.getName().equals(splitDataTypeName[index])) {
-				return false;
-			}
-			categoryPath = categoryPath.getParent();
-			--index;
-		}
-		return true;
-	}
-
-	private static boolean hasPreferredNamespaceCategory(DataType dataType, Namespace namespace) {
-		if (namespace == null) {
-			return true;
-		}
-		CategoryPath categoryPath = dataType.getCategoryPath();
-		Namespace ns = namespace;
-		while (!(ns instanceof GlobalNamespace) && !(ns instanceof Library)) {
-			if (categoryPath.equals(CategoryPath.ROOT) ||
-				!categoryPath.getName().equals(ns.getName())) {
-				return false;
-			}
-			categoryPath = categoryPath.getParent();
-			ns = ns.getParentNamespace();
-		}
-		return true;
-	}
 
 	/**
 	 * <code>NamespaceMatcher</code> is used to check data type categoryPath for match against

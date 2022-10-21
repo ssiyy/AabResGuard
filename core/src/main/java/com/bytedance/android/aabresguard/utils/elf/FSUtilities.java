@@ -18,7 +18,7 @@ package com.bytedance.android.aabresguard.utils.elf;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
 
 public class FSUtilities {
 
@@ -116,6 +116,8 @@ public class FSUtilities {
 			sb.append('%').append(hexdigit[c >> 4]).append(hexdigit[c & 0x0f]);
 			return;
 		}
+
+
 		sb.append(URLEncoder.encode("" + c, StandardCharsets.UTF_8));
 	}
 

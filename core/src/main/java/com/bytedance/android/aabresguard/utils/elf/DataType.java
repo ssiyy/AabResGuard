@@ -22,24 +22,7 @@ import java.net.URL;
  */
 public interface DataType {
 
-	/**
-	 * WARNING: do not add <code>default</code> method implementations to this interface. Doing so
-	 * intereferes with correct initialization of the static instance variables {@link #DEFAULT} and
-	 * {@link #VOID} below.
-	 */
 
-	/**
-	 * Singleton instance of default datatype.
-	 */
-	public static final DataType DEFAULT = DefaultDataType.dataType;
-
-	/**
-	 * Instance of void datatype (never use <code>==</code>)
-	 * 
-	 * @deprecated should use {@link VoidDataType#dataType} instead
-	 */
-	@Deprecated
-	public static final DataType VOID = VoidDataType.dataType;
 
 	public final static String CONFLICT_SUFFIX = ".conflict";
 
@@ -184,8 +167,6 @@ public interface DataType {
 	 * Get the length (number of 8-bit bytes) of this DataType.
 	 * <p>
 	 * NOTE: No datatype should ever return 0, even if {@link #isZeroLength()}, and only
-	 * {@link Dynamic} datatypes should return -1. If {@link #isZeroLength()} is true a length of 1
-	 * should be returned. Where a zero-length datatype can be handled (e.g., {@link Composite}) the
 	 * {@link #isZeroLength()} method should be used.
 	 * 
 	 * @return the length of this DataType
@@ -244,52 +225,7 @@ public interface DataType {
 	 */
 	public URL getDocs();
 
-	/**
-	 * Get the data in the form of the appropriate Object for this DataType.
-	 * <p>
-	 * For instance if the datatype is an AddressDT, return an Address object. a Byte, return a
-	 * Scalar* (maybe this should be a Byte) a Float, return a Float
-	 *
-	 * @param buf the data buffer.
-	 * @param settings the settings to use.
-	 * @param length the number of bytes to get the value from.
-	 * @return the data Object.
-	 */
-	public Object getValue(MemBuffer buf, Settings settings, int length);
 
-	/**
-	 * Check if this type supports encoding (patching)
-	 * <p>
-	 * If unsupported, {@link #encodeValue(Object, MemBuffer, Settings, int)} and
-	 * {@link #encodeRepresentation(String, MemBuffer, Settings, int)} will always throw an
-	 * exception. Actions which rely on either {@code encode} method should not be displayed if the
-	 * applicable datatype is not encodable.
-	 * 
-	 * @return true if encoding is supported
-	 */
-	public boolean isEncodable();
-
-	/**
-	 * Encode bytes from an Object appropriate for this DataType.
-	 * <p>
-	 * Converts the given object to the byte encoding and returns it. When appropriate, this should
-	 * seek the nearest encoding to the specified value, since the object may come from a user
-	 * script. For example, a floating-point value may be rounded. Invalid values should be rejected
-	 * with a {@link DataTypeEncodeException}.
-	 * 
-	 * @param value the desired value.
-	 * @param buf a buffer representing the eventual destination of the bytes.
-	 * @param settings the settings to use.
-	 * @param length the expected length of the result, usually the length of the data unit, or -1
-	 *            to let the type choose the length. It may be ignored, e.g., for fixed-length
-	 *            types.
-	 * @return the encoded value.
-	 * @throws DataTypeEncodeException if the value cannot be encoded for any reason, e.g.,
-	 *             incorrect type, not enough space, buffer overflow, unsupported (see
-	 *             {@link #isEncodable()}).
-	 */
-	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
-			throws DataTypeEncodeException;
 
 	/**
 	 * Get the Class of the value to be returned by this datatype.
@@ -319,67 +255,8 @@ public interface DataType {
 	 */
 	public String getDefaultAbbreviatedLabelPrefix();
 
-	/**
-	 * Returns the appropriate string to use as the default label prefix.
-	 * 
-	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param len the length of the data.
-	 * @param options options for how to format the default label prefix.
-	 * @return the default label prefix or null if none specified.
-	 */
-	public String getDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
-			DataTypeDisplayOptions options);
 
-	/**
-	 * Returns the appropriate string to use as the default label prefix.
-	 * <p>
-	 * This takes into account the fact that there exists a reference to the data that references
-	 * <code>offcutLength</code> bytes into this type
-	 * 
-	 * @param buf memory buffer containing the bytes.
-	 * @param settings the Settings object
-	 * @param len the length of the data.
-	 * @param options options for how to format the default label prefix.
-	 * @param offcutOffset offset into datatype
-	 * @return the default label prefix.
-	 */
-	public String getDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
-			DataTypeDisplayOptions options, int offcutOffset);
 
-	/**
-	 * Get bytes from memory in a printable format for this type.
-	 *
-	 * @param buf the data.
-	 * @param settings the settings to use for the representation.
-	 * @param length the number of bytes to represent.
-	 * @return the representation of the data in this format, never null.
-	 */
-	public String getRepresentation(MemBuffer buf, Settings settings, int length);
-
-	/**
-	 * Encode bytes according to the display format for this type.
-	 * <p>
-	 * Converts the given representation to the byte encoding and returns it. When appropriate, this
-	 * should seek the nearest encoding to the specified value, since the representation is likely
-	 * coming from user input. For example, a floating-point value may be rounded. Invalid
-	 * representations should be rejected with a {@link DataTypeEncodeException}.
-	 * 
-	 * @param repr the representation of the desired value, as in
-	 *            {@link #getRepresentation(MemBuffer, Settings, int)}. The supported formats depend
-	 *            on the specific datatype and its settings.
-	 * @param buf a buffer representing the eventual destination of the bytes.
-	 * @param settings the settings to use for the representation.
-	 * @param length the expected length of the result, usually the length of the data unit, or -1
-	 *            to let the type choose the length. It may be ignored, e.g., for fixed-length
-	 *            types.
-	 * @return the encoded value.
-	 * @throws DataTypeEncodeException if the value cannot be encoded for any reason, e.g.,
-	 *             incorrect format, not enough space, buffer overflow, unsupported (see
-	 *             {@link #isEncodable()}).
-	 */
-	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
-			throws DataTypeEncodeException;
 
 	/**
 	 * Returns true if this datatype has been deleted and is no longer valid
@@ -548,8 +425,7 @@ public interface DataType {
 	 * <p>
 	 * The datatypes must be of the same "type" (i.e. structure can only be replacedWith another
 	 * structure.
-	 * 
-	 * @param datatype the datatype that contains the internals to upgrade to.
+	 *
 	 * @throws UnsupportedOperationException if the datatype does not support change.
 	 * @throws IllegalArgumentException if the given datatype is not the same type as this datatype.
 	 */

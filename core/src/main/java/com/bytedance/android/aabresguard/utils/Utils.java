@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 public class Utils {
+
     public static boolean isPresent(String str) {
         return str != null && str.length() > 0;
     }

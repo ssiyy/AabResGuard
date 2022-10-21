@@ -46,8 +46,7 @@ dependencies {
     shadow group: 'org.dom4j', name: 'dom4j', version: '2.1.0'
 
     shadow "org.apache.commons:commons-collections4:4.3"
-
-    shadow "com.sun.jna:jna:3.0.9"
+    shadow "cglib:cglib:2.2.2"
 
     shadow deps.bundletool
 
@@ -77,7 +76,8 @@ shadowJar {
 
     minimize {
         exclude(dependency('org.sejda.imageio:.*:.*'))
-        exclude(dependency('com.sun.jna:.*:.*'))
+        exclude(dependency('cglib:.*:.*'))
+        exclude(dependency('org.jdom:.*:.*'))
     }
 
     from sourceSets.main.output

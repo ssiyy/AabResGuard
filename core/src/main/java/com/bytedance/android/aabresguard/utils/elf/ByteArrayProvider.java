@@ -78,11 +78,6 @@ public class ByteArrayProvider implements ByteProvider {
 	}
 
 	@Override
-	public FSRL getFSRL() {
-		return fsrl;
-	}
-
-	@Override
 	public File getFile() {
 		return null;
 	}
