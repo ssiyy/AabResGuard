@@ -278,18 +278,20 @@ public class ResourcesObfuscator {
         for (ModuleEntry entry : bundleModule.getEntries()) {
             String bundleRawPath = bundleModule.getName().getName() + "/" + entry.getPath().toString();
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
-
-            String contentObfuscatePath;
             if (obfuscatedPath != null) {
-                //如果需要混淆路径
-                contentObfuscatePath = obfuscatedPath;
+                //需要混淆资源路径（修改名字）
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
+                obfuscateEntries.add(obfuscatedEntry);
             } else {
-                //不需要混淆路径
-                contentObfuscatePath = bundleRawPath;
+                boolean isResFile = entry.getPath().startsWith(BundleModule.RESOURCES_DIRECTORY);
+                boolean isAssetsFile = entry.getPath().startsWith(BundleModule.ASSETS_DIRECTORY);
+                if (isResFile || isAssetsFile) {
+                    ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(bundleRawPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
+                    obfuscateEntries.add(obfuscatedEntry);
+                }else {
+                    obfuscateEntries.add(entry);
+                }
             }
-            //进行内容混淆
-            ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(contentObfuscatePath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
-            obfuscateEntries.add(obfuscatedEntry);
         }
         builder.setRawEntries(obfuscateEntries);
 
@@ -345,7 +347,7 @@ public class ResourcesObfuscator {
         } catch (Exception e) {
             resourcesMapping.putXmlMapping(rawPath, e.getMessage());
             System.err.println(rawPath);
-           // e.printStackTrace();
+            // e.printStackTrace();
         }
 
         return bytes;
@@ -383,7 +385,7 @@ public class ResourcesObfuscator {
             resourcesMapping.putImageMapping(rawPath, w, h, color);
             return imgsrc;
         } catch (Exception e) {
-           // e.printStackTrace();
+            // e.printStackTrace();
             System.err.println(rawPath);
             resourcesMapping.putImageMapping(rawPath, -1, -1, null);
             return null;
