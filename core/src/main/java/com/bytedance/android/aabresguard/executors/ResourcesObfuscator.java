@@ -278,18 +278,12 @@ public class ResourcesObfuscator {
         for (ModuleEntry entry : bundleModule.getEntries()) {
             String bundleRawPath = bundleModule.getName().getName() + "/" + entry.getPath().toString();
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
-
-            String contentObfuscatePath;
             if (obfuscatedPath != null) {
-                //如果需要混淆路径
-                contentObfuscatePath = obfuscatedPath;
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
+                obfuscateEntries.add(obfuscatedEntry);
             } else {
-                //不需要混淆路径
-                contentObfuscatePath = bundleRawPath;
+                obfuscateEntries.add(entry);
             }
-            //进行内容混淆
-            ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(contentObfuscatePath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
-            obfuscateEntries.add(obfuscatedEntry);
         }
         builder.setRawEntries(obfuscateEntries);
 
@@ -313,8 +307,16 @@ public class ResourcesObfuscator {
         String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
         try {
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
-                BufferedImage bii = obfuscatorRandomPixel(bundleRawPath, inputStream);
-                return bufferedImageToByteArray(bii, extension);
+                String fileName = FileUtils.getFileName(bundleRawPath);
+                if (fileName.contains(".9")){
+                 //.9还有问题需要处理
+                    byte[] bytes = IOUtils.toByteArray(inputStream);
+                    inputStream.close();
+                    return bytes;
+                }else {
+                    BufferedImage bii = obfuscatorRandomPixel(bundleRawPath, inputStream);
+                    return bufferedImageToByteArray(bii, extension);
+                }
             } else if (extension.endsWith("xml")) {
                 return obfuscatorXml(bundleRawPath, inputStream);
             }
@@ -345,7 +347,7 @@ public class ResourcesObfuscator {
         } catch (Exception e) {
             resourcesMapping.putXmlMapping(rawPath, e.getMessage());
             System.err.println(rawPath);
-           // e.printStackTrace();
+            // e.printStackTrace();
         }
 
         return bytes;
@@ -383,7 +385,7 @@ public class ResourcesObfuscator {
             resourcesMapping.putImageMapping(rawPath, w, h, color);
             return imgsrc;
         } catch (Exception e) {
-           // e.printStackTrace();
+            // e.printStackTrace();
             System.err.println(rawPath);
             resourcesMapping.putImageMapping(rawPath, -1, -1, null);
             return null;
