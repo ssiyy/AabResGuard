@@ -309,7 +309,7 @@ public class ResourcesObfuscator {
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
                 String fileName = FileUtils.getFileName(bundleRawPath);
                 if (fileName.contains(".9")){
-                 //.9还有问题需要处理
+                    //.9还有问题需要处理
                     byte[] bytes = IOUtils.toByteArray(inputStream);
                     inputStream.close();
                     return bytes;
@@ -321,7 +321,7 @@ public class ResourcesObfuscator {
                 return obfuscatorXml(bundleRawPath, inputStream);
             }
         } catch (IOException e) {
-           //
+            //
         }
 
         byte[] bytes = IOUtils.toByteArray(inputStream);
