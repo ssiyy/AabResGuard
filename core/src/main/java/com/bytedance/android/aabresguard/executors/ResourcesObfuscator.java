@@ -30,6 +30,7 @@ import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
+import com.bytedance.android.aabresguard.utils.ninepatch.GraphicsUtilities;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -352,8 +353,13 @@ public class ResourcesObfuscator {
      */
     private byte[] obfuscatorRandomPixel(String rawPath, byte[] orgByte, String extension) {
         try {
+            String fileName = FileUtils.getFileName(rawPath);
+            if (fileName.contains(".9")){
+                return orgByte;
+            }
+
             InputStream inputStream = new ByteArrayInputStream(orgByte);
-            BufferedImage imgsrc = ImageIO.read(inputStream);
+            BufferedImage imgsrc = GraphicsUtilities.loadCompatibleImage(inputStream); // ImageIO.read(inputStream);
 
             int width = imgsrc.getWidth();
             int height = imgsrc.getHeight();
@@ -380,7 +386,7 @@ public class ResourcesObfuscator {
             imgsrc.setRGB(w, h, color.getRGB());
 
             byte[] afterByte = bufferedImageToByteArray(imgsrc, extension);
-            resourcesMapping.putImageMapping(rawPath, w, h, imgsrc.getWidth(), imgsrc.getHeight(), color, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
+            resourcesMapping.putImageMapping(rawPath, w, h, width, height, color, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
             return afterByte;
         } catch (Exception e) {
             try {
