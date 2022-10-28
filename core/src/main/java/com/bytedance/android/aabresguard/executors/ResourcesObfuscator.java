@@ -282,7 +282,7 @@ public class ResourcesObfuscator {
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
             if (obfuscatedPath != null) {
                 byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
-                byte[] obfuscatorByte = obfuscatorResContent(bundleRawPath,orgByte);
+                byte[] obfuscatorByte = obfuscatorResContent(bundleRawPath, obfuscatedPath, orgByte);
                 ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorByte);
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
@@ -307,13 +307,13 @@ public class ResourcesObfuscator {
      * @return
      * @throws IOException
      */
-    private byte[] obfuscatorResContent(String bundleRawPath, byte[] orgByte) throws IOException {
+    private byte[] obfuscatorResContent(String bundleRawPath, String obfuscatedPath, byte[] orgByte) throws IOException {
         try {
             String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
-                return obfuscatorRandomPixel(bundleRawPath, orgByte, extension);
+                return obfuscatorRandomPixel(bundleRawPath, obfuscatedPath, orgByte, extension);
             } else if (extension.endsWith("xml")) {
-                return obfuscatorXml(bundleRawPath, orgByte);
+                return obfuscatorXml(bundleRawPath, obfuscatedPath, orgByte);
             }
         } catch (Exception e) {
             //
@@ -321,7 +321,7 @@ public class ResourcesObfuscator {
         return orgByte;
     }
 
-    private byte[] obfuscatorXml(String rawPath, byte[] orgByte) throws IOException {
+    private byte[] obfuscatorXml(String rawPath, String obfuscatedPath, byte[] orgByte) throws IOException {
 
         try {
             Resources.XmlNode xmlNode = Resources.XmlNode.parseFrom(orgByte);
@@ -334,10 +334,10 @@ public class ResourcesObfuscator {
                     .build()
                     .getProto()
                     .toByteArray();
-            resourcesMapping.putXmlMapping(rawPath, prefix + ":" + RES_AUTO_NS, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
+            resourcesMapping.putXmlMapping(rawPath, obfuscatedPath, prefix + ":" + RES_AUTO_NS, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
             return afterByte;
         } catch (Exception e) {
-            resourcesMapping.putXmlMapping(rawPath, e.getMessage(), DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+            resourcesMapping.putXmlMapping(rawPath, obfuscatedPath, e.getMessage(), DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
             return orgByte;
         }
     }
@@ -351,10 +351,10 @@ public class ResourcesObfuscator {
      * @param extension
      * @return
      */
-    private byte[] obfuscatorRandomPixel(String rawPath, byte[] orgByte, String extension) {
+    private byte[] obfuscatorRandomPixel(String rawPath, String obfuscatedPath, byte[] orgByte, String extension) {
         try {
             String fileName = FileUtils.getFileName(rawPath);
-            if (fileName.contains(".9")){
+            if (fileName.contains(".9")) {
                 return orgByte;
             }
 
@@ -378,23 +378,23 @@ public class ResourcesObfuscator {
                 green = 0;
             }
 
-            int blue = color.getBlue() +1;
-            if (blue>255){
+            int blue = color.getBlue() + 1;
+            if (blue > 255) {
                 blue = 255;
             }
             color = new Color(red, green, blue);
             imgsrc.setRGB(w, h, color.getRGB());
 
             byte[] afterByte = bufferedImageToByteArray(imgsrc, extension);
-            resourcesMapping.putImageMapping(rawPath, w, h, width, height, color, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
+            resourcesMapping.putImageMapping(rawPath, obfuscatedPath, w, h, width, height, color, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
             return afterByte;
         } catch (Exception e) {
             try {
                 InputStream inputStream = new ByteArrayInputStream(orgByte);
                 BufferedImage imgsrc = ImageIO.read(inputStream);
-                resourcesMapping.putImageMapping(rawPath, -1, -1, imgsrc.getWidth(), imgsrc.getHeight(), null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+                resourcesMapping.putImageMapping(rawPath, obfuscatedPath, -1, -1, imgsrc.getWidth(), imgsrc.getHeight(), null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
             } catch (Exception ex) {
-                resourcesMapping.putImageMapping(rawPath, -1, -1, -1, -1, null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+                resourcesMapping.putImageMapping(rawPath, obfuscatedPath, -1, -1, -1, -1, null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
             }
             return orgByte;
         }
