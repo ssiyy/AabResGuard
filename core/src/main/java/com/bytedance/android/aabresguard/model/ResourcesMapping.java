@@ -89,7 +89,7 @@ public class ResourcesMapping {
     }
 
     public void putXmlMapping(String rawPath, String namespace, String orgMd5, String afterMd5) {
-        xmlMapping.put(rawPath, namespace + ",md5:" + orgMd5 + " -> " + afterMd5 + (",result:" + Objects.equals(orgMd5, afterMd5)));
+        xmlMapping.put(rawPath, namespace + ",md5:" + orgMd5 + " -> " + afterMd5 + (",result:" + !Objects.equals(orgMd5, afterMd5)));
     }
 
     public List<String> getPathMappingNameList() {
