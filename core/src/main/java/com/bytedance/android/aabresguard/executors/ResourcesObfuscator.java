@@ -32,10 +32,11 @@ import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
 import com.google.common.collect.ImmutableMap;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -279,7 +280,9 @@ public class ResourcesObfuscator {
             String bundleRawPath = bundleModule.getName().getName() + "/" + entry.getPath().toString();
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
             if (obfuscatedPath != null) {
-                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
+                byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+                byte[] obfuscatorByte = obfuscatorResContent(bundleRawPath,orgByte);
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorByte);
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
                 obfuscateEntries.add(entry);
@@ -299,73 +302,61 @@ public class ResourcesObfuscator {
      * 混淆图片
      *
      * @param bundleRawPath
-     * @param inputStream
+     * @param orgByte
      * @return
      * @throws IOException
      */
-    private byte[] obfuscatorResContent(String bundleRawPath, InputStream inputStream) throws IOException {
-        String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+    private byte[] obfuscatorResContent(String bundleRawPath, byte[] orgByte) throws IOException {
         try {
+            String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
-                String fileName = FileUtils.getFileName(bundleRawPath);
-                if (fileName.contains(".9")){
-                    //.9还有问题需要处理
-                    byte[] bytes = IOUtils.toByteArray(inputStream);
-                    inputStream.close();
-                    return bytes;
-                }else {
-                    BufferedImage bii = obfuscatorRandomPixel(bundleRawPath, inputStream);
-                    return bufferedImageToByteArray(bii, extension);
-                }
+                return obfuscatorRandomPixel(bundleRawPath, orgByte, extension);
             } else if (extension.endsWith("xml")) {
-                return obfuscatorXml(bundleRawPath, inputStream);
+                return obfuscatorXml(bundleRawPath, orgByte);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             //
         }
-
-        byte[] bytes = IOUtils.toByteArray(inputStream);
-        inputStream.close();
-        return bytes;
+        return orgByte;
     }
 
-    private byte[] obfuscatorXml(String rawPath, InputStream inputStream) throws IOException {
-        byte[] bytes = IOUtils.toByteArray(inputStream);
-        inputStream.close();
+    private byte[] obfuscatorXml(String rawPath, byte[] orgByte) throws IOException {
+
         try {
-            Resources.XmlNode xmlNode = Resources.XmlNode.parseFrom(bytes);
+            Resources.XmlNode xmlNode = Resources.XmlNode.parseFrom(orgByte);
             XmlProtoNode xml = new XmlProtoNode(xmlNode);
             XmlProtoElementBuilder element = xml.toBuilder().getElement();
 
             String prefix = "magic_minify" + new Random().nextInt(9999);
             String RES_AUTO_NS = "http://schemas.android.com/apk/res-auto";
-            resourcesMapping.putXmlMapping(rawPath, prefix + ":" + RES_AUTO_NS);
-            return xml.toBuilder().setElement(element.addNamespaceDeclaration(prefix, RES_AUTO_NS))
+            byte[] afterByte = xml.toBuilder().setElement(element.addNamespaceDeclaration(prefix, RES_AUTO_NS))
                     .build()
                     .getProto()
                     .toByteArray();
+            resourcesMapping.putXmlMapping(rawPath, prefix + ":" + RES_AUTO_NS, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
+            return afterByte;
         } catch (Exception e) {
-            resourcesMapping.putXmlMapping(rawPath, e.getMessage());
-            System.err.println(rawPath);
-            // e.printStackTrace();
+            resourcesMapping.putXmlMapping(rawPath, e.getMessage(), DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+            return orgByte;
         }
-
-        return bytes;
     }
 
 
     /**
      * 混淆随机像素点
      *
-     * @param inputStream
+     * @param rawPath
+     * @param orgByte
+     * @param extension
      * @return
      */
-    private BufferedImage obfuscatorRandomPixel(String rawPath, InputStream inputStream) {
+    private byte[] obfuscatorRandomPixel(String rawPath, byte[] orgByte, String extension) {
         try {
+            InputStream inputStream = new ByteArrayInputStream(orgByte);
             BufferedImage imgsrc = ImageIO.read(inputStream);
+
             int width = imgsrc.getWidth();
             int height = imgsrc.getHeight();
-
             //随机处理一个像素点
             int w = new Random().nextInt(Math.max(width - 1, 1));
             int h = new Random().nextInt(Math.max(height - 1, 1));
@@ -382,13 +373,19 @@ public class ResourcesObfuscator {
             }
             color = new Color(red, green, color.getBlue());
             imgsrc.setRGB(w, h, color.getRGB());
-            resourcesMapping.putImageMapping(rawPath, w, h, color);
-            return imgsrc;
+
+            byte[] afterByte = bufferedImageToByteArray(imgsrc, extension);
+            resourcesMapping.putImageMapping(rawPath, w, h, imgsrc.getWidth(), imgsrc.getHeight(), color, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
+            return afterByte;
         } catch (Exception e) {
-            // e.printStackTrace();
-            System.err.println(rawPath);
-            resourcesMapping.putImageMapping(rawPath, -1, -1, null);
-            return null;
+            try {
+                InputStream inputStream = new ByteArrayInputStream(orgByte);
+                BufferedImage imgsrc = ImageIO.read(inputStream);
+                resourcesMapping.putImageMapping(rawPath, -1, -1, imgsrc.getWidth(), imgsrc.getHeight(), null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+            } catch (Exception ex) {
+                resourcesMapping.putImageMapping(rawPath, -1, -1, -1, -1, null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+            }
+            return orgByte;
         }
     }
 
