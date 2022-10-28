@@ -72,11 +72,12 @@ public class ResourcesObfuscator {
 
     private final AppBundle rawAppBundle;
     private final Set<String> whiteListRules;
+    private final Set<String> filterContentRules;
     private final Path outputMappingPath;
     private final ZipFile bundleZipFile;
     private ResourcesMapping resourcesMapping;
 
-    public ResourcesObfuscator(Path bundlePath, AppBundle rawAppBundle, Set<String> whiteListRules, Path outputLogLocationDir, Path mappingPath) throws IOException {
+    public ResourcesObfuscator(Path bundlePath, AppBundle rawAppBundle, Set<String> whiteListRules, Set<String> filterContentRules, Path outputLogLocationDir, Path mappingPath) throws IOException {
         if (mappingPath != null && mappingPath.toFile().exists()) {
             resourcesMapping = new ResourcesMappingParser(mappingPath).parse();
         } else {
@@ -90,7 +91,7 @@ public class ResourcesObfuscator {
 
         this.rawAppBundle = rawAppBundle;
         this.whiteListRules = whiteListRules;
-
+        this.filterContentRules = filterContentRules;
     }
 
     public Path getOutputMappingPath() {
@@ -309,6 +310,9 @@ public class ResourcesObfuscator {
      */
     private byte[] obfuscatorResContent(String bundleRawPath, String obfuscatedPath, byte[] orgByte) throws IOException {
         try {
+            if (!shouldBeFilterContent(bundleRawPath)) {
+                return orgByte;
+            }
             String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
             if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
                 return obfuscatorRandomPixel(bundleRawPath, obfuscatedPath, orgByte, extension);
@@ -491,6 +495,15 @@ public class ResourcesObfuscator {
         for (String rule : whiteListRules) {
             Pattern filterPattern = Pattern.compile(Utils.convertToPatternString(rule));
             if (filterPattern.matcher(resourceName).matches()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean shouldBeFilterContent(String rawPath) {
+        for (String rule : filterContentRules) {
+            if (rawPath.endsWith(rule)) {
                 return false;
             }
         }
