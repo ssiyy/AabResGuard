@@ -371,7 +371,12 @@ public class ResourcesObfuscator {
             if (green < 0) {
                 green = 0;
             }
-            color = new Color(red, green, color.getBlue());
+
+            int blue = color.getBlue() +1;
+            if (blue>255){
+                blue = 255;
+            }
+            color = new Color(red, green, blue);
             imgsrc.setRGB(w, h, color.getRGB());
 
             byte[] afterByte = bufferedImageToByteArray(imgsrc, extension);

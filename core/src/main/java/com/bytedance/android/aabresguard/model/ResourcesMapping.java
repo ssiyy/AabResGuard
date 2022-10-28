@@ -77,15 +77,15 @@ public class ResourcesMapping {
         int red = -1;
         int green = -1;
         int blue = -1;
-        if (color != null){
+        if (color != null) {
             red = color.getRed();
             green = color.getGreen();
             blue = color.getBlue();
         }
         imageMapping.put(rawPath, "(" + x + "," + y + ") of (w:" + width + ",h:" + height + ")" +
                 "->rgb:(" + red + "," + green + "," + blue + ")," +
-                "md5:" + orgMd5 + " -> " + afterMd5+"," +
-                "result:"+Objects.equals(orgMd5,afterMd5));
+                "md5:" + orgMd5 + " -> " + afterMd5 + "," +
+                "result:" + !Objects.equals(orgMd5, afterMd5));
     }
 
     public void putXmlMapping(String rawPath, String namespace, String orgMd5, String afterMd5) {
