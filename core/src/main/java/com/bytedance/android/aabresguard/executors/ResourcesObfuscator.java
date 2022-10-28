@@ -357,10 +357,10 @@ public class ResourcesObfuscator {
      */
     private byte[] obfuscatorRandomPixel(String rawPath, String obfuscatedPath, byte[] orgByte, String extension) {
         try {
-            String fileName = FileUtils.getFileName(rawPath);
+         /*   String fileName = FileUtils.getFileName(rawPath);
             if (fileName.contains(".9")) {
                 return orgByte;
-            }
+            }*/
 
             InputStream inputStream = new ByteArrayInputStream(orgByte);
             BufferedImage imgsrc = GraphicsUtilities.loadCompatibleImage(inputStream); // ImageIO.read(inputStream);
@@ -368,8 +368,11 @@ public class ResourcesObfuscator {
             int width = imgsrc.getWidth();
             int height = imgsrc.getHeight();
             //随机处理一个像素点
-            int w = new Random().nextInt(Math.max(width - 1, 1));
-            int h = new Random().nextInt(Math.max(height - 1, 1));
+            if (width <= 5 || height <= 5) {
+                return orgByte;
+            }
+            int w = Math.min(new Random().nextInt(width) + 2, width - 1);
+            int h = Math.min(new Random().nextInt(height) + 2, height - 1);
             int pixel = imgsrc.getRGB(w, h);
             Color color = new Color(pixel);
             int red = color.getRed() + 1;
