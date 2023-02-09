@@ -26,6 +26,7 @@ import com.bytedance.android.aabresguard.bundle.ResourcesTableOperation;
 import com.bytedance.android.aabresguard.model.ResourcesMapping;
 import com.bytedance.android.aabresguard.obfuscation.ResGuardStringBuilder;
 import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
+import com.bytedance.android.aabresguard.utils.ConsoleColors;
 import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
@@ -272,6 +273,9 @@ public class ResourcesObfuscator {
      * obfuscate bundle module.
      * 1. obfuscate bundle entries.
      * 2. obfuscate resourceTable.
+     *
+     * @param bundleModule       存储了所有文件信息
+     * @param obfuscatedEntryMap 需要混淆的资源文件信息  key-资源路径，value-混淆之后的相对路径
      */
     private BundleModule obfuscateBundleModule(BundleModule bundleModule, Map<String, String> obfuscatedEntryMap) throws IOException {
         BundleModule.Builder builder = bundleModule.toBuilder();
@@ -287,7 +291,11 @@ public class ResourcesObfuscator {
                 ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorByte);
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
-                obfuscateEntries.add(entry);
+                //如果不是资源文件会走到这儿来
+                byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+                byte[] obfuscatorByte = obfuscatorRawContent(bundleRawPath, orgByte);
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(bundleRawPath, obfuscatorByte);
+                obfuscateEntries.add(obfuscatedEntry);
             }
         }
         builder.setRawEntries(obfuscateEntries);
@@ -300,8 +308,25 @@ public class ResourcesObfuscator {
         return builder.build();
     }
 
+    private byte[] obfuscatorRawContent(String bundleRawPath, byte[] orgByte) {
+        if (!shouldBeFilterContent(bundleRawPath)) {
+            return orgByte;
+        }
+
+        ConsoleColors.greenPrintln(bundleRawPath + "\n");
+        String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+        if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
+            ConsoleColors.redPrintln(bundleRawPath + "\n");
+            return obfuscatorRandomPixel(bundleRawPath, bundleRawPath, orgByte, extension);
+        }else if(extension.endsWith("so")){
+
+        }
+
+        return orgByte;
+    }
+
     /**
-     * 混淆图片
+     * 混淆资源文件
      *
      * @param bundleRawPath
      * @param orgByte
@@ -325,8 +350,16 @@ public class ResourcesObfuscator {
         return orgByte;
     }
 
+    /**
+     * 混淆xml，插入随机字符串的命名空间
+     *
+     * @param rawPath
+     * @param obfuscatedPath
+     * @param orgByte
+     * @return
+     * @throws IOException
+     */
     private byte[] obfuscatorXml(String rawPath, String obfuscatedPath, byte[] orgByte) throws IOException {
-
         try {
             Resources.XmlNode xmlNode = Resources.XmlNode.parseFrom(orgByte);
             XmlProtoNode xml = new XmlProtoNode(xmlNode);
@@ -348,7 +381,7 @@ public class ResourcesObfuscator {
 
 
     /**
-     * 混淆随机像素点
+     * 混淆图片随机像素点
      *
      * @param rawPath
      * @param orgByte
@@ -358,6 +391,7 @@ public class ResourcesObfuscator {
     private byte[] obfuscatorRandomPixel(String rawPath, String obfuscatedPath, byte[] orgByte, String extension) {
         try {
             String fileName = FileUtils.getFileName(rawPath);
+            //如果是点9图不混淆
             if (fileName.endsWith(".9.png")) {
                 return orgByte;
             }
