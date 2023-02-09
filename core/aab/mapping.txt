@@ -1,0 +1,3 @@
+res dir mapping:
+    res/mipmap-xxhdpi -> res/mipmap-xxhdpi
+    res/mipmap-xxxhdpi -> res/mipmap-xxxhdpi
