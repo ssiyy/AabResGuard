@@ -1,5 +1,7 @@
 package com.bytedance.android.aabresguard.parser;
 
+import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
+
 import com.bytedance.android.aabresguard.model.ResourcesMapping;
 
 import java.io.BufferedReader;
@@ -9,15 +11,13 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
-
 /**
  * Created by YangJing on 2019/10/14 .
  * Email: yangjing.yeoh@bytedance.com
  */
 public class ResourcesMappingParser {
     private static final Pattern MAP_DIR_PATTERN = Pattern.compile("\\s+(.*)->(.*)");
-    private static final Pattern MAP_RES_PATTERN = Pattern.compile("\\s+(.*):(.*)->(.*)");
+    public static final Pattern MAP_RES_PATTERN = Pattern.compile("\\s+(.*):(.*)->(.*)");
     private final Path mappingPath;
 
     public ResourcesMappingParser(Path mappingPath) {

@@ -26,7 +26,6 @@ import com.bytedance.android.aabresguard.bundle.ResourcesTableOperation;
 import com.bytedance.android.aabresguard.model.ResourcesMapping;
 import com.bytedance.android.aabresguard.obfuscation.ResGuardStringBuilder;
 import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
-import com.bytedance.android.aabresguard.utils.ConsoleColors;
 import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
@@ -292,10 +291,16 @@ public class ResourcesObfuscator {
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
                 //如果不是资源文件会走到这儿来
-                byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
-                byte[] obfuscatorByte = obfuscatorRawContent(bundleRawPath, orgByte);
-                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(bundleRawPath, obfuscatorByte);
-                obfuscateEntries.add(obfuscatedEntry);
+                String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+                if (isObfuscateFile(extension) && shouldBeFilterContent(bundleRawPath)) {
+                    byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+                    byte[] obfuscatorByte = obfuscatorRawContent(bundleRawPath, orgByte);
+                    String obfuscatorPath = bundleRawPath.substring(bundleRawPath.indexOf('/') + 1);
+                    ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatorPath, obfuscatorByte);
+                    obfuscateEntries.add(obfuscatedEntry);
+                } else {
+                    obfuscateEntries.add(entry);
+                }
             }
         }
         builder.setRawEntries(obfuscateEntries);
@@ -309,19 +314,12 @@ public class ResourcesObfuscator {
     }
 
     private byte[] obfuscatorRawContent(String bundleRawPath, byte[] orgByte) {
-        if (!shouldBeFilterContent(bundleRawPath)) {
-            return orgByte;
-        }
-
-        ConsoleColors.greenPrintln(bundleRawPath + "\n");
         String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
-        if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
-            ConsoleColors.redPrintln(bundleRawPath + "\n");
+        if (isObfuscateImage(extension)) {
             return obfuscatorRandomPixel(bundleRawPath, bundleRawPath, orgByte, extension);
-        }else if(extension.endsWith("so")){
+        } else if (extension.endsWith("so")) {
 
         }
-
         return orgByte;
     }
 
@@ -339,9 +337,9 @@ public class ResourcesObfuscator {
                 return orgByte;
             }
             String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
-            if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
+            if (isObfuscateImage(extension)) {
                 return obfuscatorRandomPixel(bundleRawPath, obfuscatedPath, orgByte, extension);
-            } else if (extension.endsWith("xml")) {
+            } else if (isObfuscateXml(extension)) {
                 return obfuscatorXml(bundleRawPath, obfuscatedPath, orgByte);
             }
         } catch (Exception e) {
@@ -455,6 +453,18 @@ public class ResourcesObfuscator {
         return b;
     }
 
+    private boolean isObfuscateFile(String extension) {
+        return isObfuscateImage(extension) || isObfuscateXml(extension);
+    }
+
+    private boolean isObfuscateImage(String extension) {
+        return extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp");
+    }
+
+    private boolean isObfuscateXml(String extension) {
+        return extension.endsWith("xml");
+    }
+
 
     /**
      * Obfuscate resourceTable.
@@ -538,6 +548,11 @@ public class ResourcesObfuscator {
         return true;
     }
 
+    /**
+     * 是否应该被过滤
+     * @param rawPath
+     * @return true 应该过滤不混淆 false不过滤，要混淆
+     */
     private boolean shouldBeFilterContent(String rawPath) {
         for (String rule : filterContentRules) {
             if (rawPath.endsWith(rule)) {
