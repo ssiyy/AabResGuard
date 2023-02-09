@@ -291,12 +291,15 @@ public class ResourcesObfuscator {
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
                 //如果不是资源文件会走到这儿来
+                // root
+                // assets
+                // lib
+                // dex
                 String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
                 if (isObfuscateFile(extension) && shouldBeFilterContent(bundleRawPath)) {
                     byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
                     byte[] obfuscatorByte = obfuscatorRawContent(bundleRawPath, orgByte);
-                    String obfuscatorPath = bundleRawPath.substring(bundleRawPath.indexOf('/') + 1);
-                    ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatorPath, obfuscatorByte);
+                    ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(entry.getPath().toString(), obfuscatorByte);
                     obfuscateEntries.add(obfuscatedEntry);
                 } else {
                     obfuscateEntries.add(entry);
