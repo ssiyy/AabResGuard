@@ -358,7 +358,7 @@ public class ResourcesObfuscator {
     private byte[] obfuscatorRandomPixel(String rawPath, String obfuscatedPath, byte[] orgByte, String extension) {
         try {
             String fileName = FileUtils.getFileName(rawPath);
-            if (fileName.contains(".9")) {
+            if (fileName.endsWith(".9.png")) {
                 return orgByte;
             }
 
