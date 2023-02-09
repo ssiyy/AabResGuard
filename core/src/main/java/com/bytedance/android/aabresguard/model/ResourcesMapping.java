@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -72,16 +73,23 @@ public class ResourcesMapping {
         entryFilesMapping.put(rawPath, obfuscatedPath);
     }
 
-    public void putImageMapping(String rawPath, int x, int y, Color color) {
+    public void putImageMapping(String rawPath, String obfuscatedPath, int x, int y, int width, int height, Color color, String orgMd5, String afterMd5) {
+        int red = -1;
+        int green = -1;
+        int blue = -1;
         if (color != null) {
-            imageMapping.put(rawPath, "(" + x + "," + y + "),rgb:" + color.getRed() + "," + color.getGreen() + "," + color.getBlue() + "");
-        } else {
-            imageMapping.put(rawPath, "转换出错");
+            red = color.getRed();
+            green = color.getGreen();
+            blue = color.getBlue();
         }
+        imageMapping.put(rawPath + "(" + obfuscatedPath + ")", "(" + x + "," + y + ") of (w:" + width + ",h:" + height + ")" +
+                "->rgb:(" + red + "," + green + "," + blue + ")," +
+                "md5:" + orgMd5 + " -> " + afterMd5 + "," +
+                "result:" + !Objects.equals(orgMd5, afterMd5));
     }
 
-    public void putXmlMapping(String rawPath, String namespace) {
-        xmlMapping.put(rawPath, namespace);
+    public void putXmlMapping(String rawPath, String obfuscatedPath, String namespace, String orgMd5, String afterMd5) {
+        xmlMapping.put(rawPath + "(" + obfuscatedPath + ")", namespace + ",md5:" + orgMd5 + " -> " + afterMd5 + (",result:" + !Objects.equals(orgMd5, afterMd5)));
     }
 
     public List<String> getPathMappingNameList() {

@@ -30,24 +30,19 @@ import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
-import com.bytedance.android.aabresguard.utils.elf.BigEndianDataConverter;
-import com.bytedance.android.aabresguard.utils.elf.ByteArrayProvider;
-import com.bytedance.android.aabresguard.utils.elf.ElfHeader;
-import com.bytedance.android.aabresguard.utils.elf.ElfSectionHeader;
-import com.bytedance.android.aabresguard.utils.elf.LittleEndianDataConverter;
-import com.bytedance.android.aabresguard.utils.elf.RethrowContinuesFactory;
+import com.bytedance.android.aabresguard.utils.ninepatch.GraphicsUtilities;
 import com.google.common.collect.ImmutableMap;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -78,11 +73,12 @@ public class ResourcesObfuscator {
 
     private final AppBundle rawAppBundle;
     private final Set<String> whiteListRules;
+    private final Set<String> filterContentRules;
     private final Path outputMappingPath;
     private final ZipFile bundleZipFile;
     private ResourcesMapping resourcesMapping;
 
-    public ResourcesObfuscator(Path bundlePath, AppBundle rawAppBundle, Set<String> whiteListRules, Path outputLogLocationDir, Path mappingPath) throws IOException {
+    public ResourcesObfuscator(Path bundlePath, AppBundle rawAppBundle, Set<String> whiteListRules, Set<String> filterContentRules, Path outputLogLocationDir, Path mappingPath) throws IOException {
         if (mappingPath != null && mappingPath.toFile().exists()) {
             resourcesMapping = new ResourcesMappingParser(mappingPath).parse();
         } else {
@@ -96,7 +92,7 @@ public class ResourcesObfuscator {
 
         this.rawAppBundle = rawAppBundle;
         this.whiteListRules = whiteListRules;
-
+        this.filterContentRules = filterContentRules;
     }
 
     public Path getOutputMappingPath() {
@@ -277,6 +273,9 @@ public class ResourcesObfuscator {
      * obfuscate bundle module.
      * 1. obfuscate bundle entries.
      * 2. obfuscate resourceTable.
+     *
+     * @param bundleModule       存储了所有文件信息
+     * @param obfuscatedEntryMap 需要混淆的资源文件信息  key-资源路径，value-混淆之后的相对路径
      */
     private BundleModule obfuscateBundleModule(BundleModule bundleModule, Map<String, String> obfuscatedEntryMap) throws IOException {
         BundleModule.Builder builder = bundleModule.toBuilder();
@@ -287,11 +286,25 @@ public class ResourcesObfuscator {
             String bundleRawPath = bundleModule.getName().getName() + "/" + entry.getPath().toString();
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
             if (obfuscatedPath != null) {
-                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
+                byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+                byte[] obfuscatorByte = obfuscatorResContent(bundleRawPath, obfuscatedPath, orgByte);
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorByte);
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
-                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(bundleRawPath, obfuscatorResContent(bundleRawPath, AppBundleUtils.readInputStream(bundleZipFile, entry, bundleModule)));
-                obfuscateEntries.add(obfuscatedEntry);
+                //如果不是资源文件会走到这儿来
+                // root
+                // assets
+                // lib
+                // dex
+                String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+                if (isObfuscateFile(extension) && shouldBeFilterContent(bundleRawPath)) {
+                    byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+                    byte[] obfuscatorByte = obfuscatorRawContent(bundleRawPath, orgByte);
+                    ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(entry.getPath().toString(), obfuscatorByte);
+                    obfuscateEntries.add(obfuscatedEntry);
+                } else {
+                    obfuscateEntries.add(entry);
+                }
             }
         }
         builder.setRawEntries(obfuscateEntries);
@@ -304,124 +317,98 @@ public class ResourcesObfuscator {
         return builder.build();
     }
 
+    private byte[] obfuscatorRawContent(String bundleRawPath, byte[] orgByte) {
+        String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+        if (isObfuscateImage(extension)) {
+            return obfuscatorRandomPixel(bundleRawPath, bundleRawPath, orgByte, extension);
+        } else if (extension.endsWith("so")) {
+
+        }
+        return orgByte;
+    }
+
     /**
-     * 混淆图片
+     * 混淆资源文件
      *
      * @param bundleRawPath
-     * @param inputStream
+     * @param orgByte
      * @return
      * @throws IOException
      */
-    private byte[] obfuscatorResContent(String bundleRawPath, InputStream inputStream) throws IOException {
-        String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+    private byte[] obfuscatorResContent(String bundleRawPath, String obfuscatedPath, byte[] orgByte) throws IOException {
         try {
-            if (extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp")) {
-                BufferedImage bii = obfuscatorRandomPixel(bundleRawPath, inputStream);
-                return bufferedImageToByteArray(bii, extension);
-            } else if (extension.endsWith("xml")) {
-                return obfuscatorXml(bundleRawPath, inputStream);
-            } else if (extension.endsWith("so")) {
-                return obfuscateSo(bundleRawPath, inputStream);
+            if (!shouldBeFilterContent(bundleRawPath)) {
+                return orgByte;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        byte[] bytes = IOUtils.toByteArray(inputStream);
-        inputStream.close();
-        return bytes;
-    }
-
-    private byte[] obfuscateSo(String rawPath, InputStream inputStream) throws IOException {
-        byte[] bytes = IOUtils.toByteArray(inputStream);
-        inputStream.close();
-
-        File file = new File("so_temp");
-        if (file.exists()) {
-            file.delete();
-        }
-        file.mkdirs();
-
-        String soName = FileUtils.getFileName(rawPath);
-        File soFile = new File(file, soName);
-        FileOutputStream fos = new FileOutputStream(soFile);
-        IOUtils.write(bytes, fos);
-
-        try {
-            ElfHeader elfHeader = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, new ByteArrayProvider(bytes));
-            elfHeader.parse();
-
-            ElfSectionHeader[] x = elfHeader.getSections();
-            for (ElfSectionHeader header : x) {
-                String name = header.getNameAsString();
-                int shName = header.getName();
-                String type = header.getTypeAsString();
-                if (Objects.equals(name,".obdata")){
-                    header.setName(".hahaha");
-                }
-                System.err.println("Header:" + header.getNameAsString() +"-sh_name:" +shName+"-type:" + type);
+            String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+            if (isObfuscateImage(extension)) {
+                return obfuscatorRandomPixel(bundleRawPath, obfuscatedPath, orgByte, extension);
+            } else if (isObfuscateXml(extension)) {
+                return obfuscatorXml(bundleRawPath, obfuscatedPath, orgByte);
             }
-
-          /*  elfHeader.addSection(".hanee",0);
-            File obDir = new File(file,"obfuscator");
-            if (obDir.exists()){
-                obDir.delete();
-            }
-            obDir.mkdirs();
-            File obFile = new File(obDir,"ob_"+soName);*/
-            RandomAccessFile rfile = new RandomAccessFile(soFile ,"rw");
-            elfHeader.write(rfile,elfHeader.isBigEndian()? BigEndianDataConverter.INSTANCE: LittleEndianDataConverter.INSTANCE);
-
-
         } catch (Exception e) {
-            System.err.println("xxxxxxxxxxxxxxxxxxxxxxxxxx:"+e.getMessage());
-            e.printStackTrace();
+            //
         }
-
-
-        return bytes;
+        return orgByte;
     }
 
-    private byte[] obfuscatorXml(String rawPath, InputStream inputStream) throws IOException {
-        byte[] bytes = IOUtils.toByteArray(inputStream);
-        inputStream.close();
+    /**
+     * 混淆xml，插入随机字符串的命名空间
+     *
+     * @param rawPath
+     * @param obfuscatedPath
+     * @param orgByte
+     * @return
+     * @throws IOException
+     */
+    private byte[] obfuscatorXml(String rawPath, String obfuscatedPath, byte[] orgByte) throws IOException {
         try {
-            Resources.XmlNode xmlNode = Resources.XmlNode.parseFrom(bytes);
+            Resources.XmlNode xmlNode = Resources.XmlNode.parseFrom(orgByte);
             XmlProtoNode xml = new XmlProtoNode(xmlNode);
             XmlProtoElementBuilder element = xml.toBuilder().getElement();
 
             String prefix = "magic_minify" + new Random().nextInt(9999);
             String RES_AUTO_NS = "http://schemas.android.com/apk/res-auto";
-            resourcesMapping.putXmlMapping(rawPath, prefix + ":" + RES_AUTO_NS);
-            return xml.toBuilder().setElement(element.addNamespaceDeclaration(prefix, RES_AUTO_NS))
+            byte[] afterByte = xml.toBuilder().setElement(element.addNamespaceDeclaration(prefix, RES_AUTO_NS))
                     .build()
                     .getProto()
                     .toByteArray();
+            resourcesMapping.putXmlMapping(rawPath, obfuscatedPath, prefix + ":" + RES_AUTO_NS, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
+            return afterByte;
         } catch (Exception e) {
-            resourcesMapping.putXmlMapping(rawPath, e.getMessage());
-            System.err.println(rawPath);
-            e.printStackTrace();
+            resourcesMapping.putXmlMapping(rawPath, obfuscatedPath, e.getMessage(), DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+            return orgByte;
         }
-
-        return bytes;
     }
 
 
     /**
-     * 混淆随机像素点
+     * 混淆图片随机像素点
      *
-     * @param inputStream
+     * @param rawPath
+     * @param orgByte
+     * @param extension
      * @return
      */
-    private BufferedImage obfuscatorRandomPixel(String rawPath, InputStream inputStream) {
+    private byte[] obfuscatorRandomPixel(String rawPath, String obfuscatedPath, byte[] orgByte, String extension) {
         try {
-            BufferedImage imgsrc = ImageIO.read(inputStream);
+            String fileName = FileUtils.getFileName(rawPath);
+            //如果是点9图不混淆
+            if (fileName.endsWith(".9.png")) {
+                return orgByte;
+            }
+
+            InputStream inputStream = new ByteArrayInputStream(orgByte);
+            BufferedImage imgsrc = GraphicsUtilities.loadCompatibleImage(inputStream); // ImageIO.read(inputStream);
+
             int width = imgsrc.getWidth();
             int height = imgsrc.getHeight();
-
             //随机处理一个像素点
-            int w = new Random().nextInt(Math.max(width - 1, 1));
-            int h = new Random().nextInt(Math.max(height - 1, 1));
+            if (width <= 5 || height <= 5) {
+                return orgByte;
+            }
+            int w = Math.min(new Random().nextInt(width) + 2, width - 1);
+            int h = Math.min(new Random().nextInt(height) + 2, height - 1);
             int pixel = imgsrc.getRGB(w, h);
             Color color = new Color(pixel);
             int red = color.getRed() + 1;
@@ -433,15 +420,26 @@ public class ResourcesObfuscator {
             if (green < 0) {
                 green = 0;
             }
-            color = new Color(red, green, color.getBlue());
+
+            int blue = color.getBlue() + 1;
+            if (blue > 255) {
+                blue = 255;
+            }
+            color = new Color(red, green, blue);
             imgsrc.setRGB(w, h, color.getRGB());
-            resourcesMapping.putImageMapping(rawPath, w, h, color);
-            return imgsrc;
+
+            byte[] afterByte = bufferedImageToByteArray(imgsrc, extension);
+            resourcesMapping.putImageMapping(rawPath, obfuscatedPath, w, h, width, height, color, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(afterByte));
+            return afterByte;
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(rawPath);
-            resourcesMapping.putImageMapping(rawPath, -1, -1, null);
-            return null;
+            try {
+                InputStream inputStream = new ByteArrayInputStream(orgByte);
+                BufferedImage imgsrc = ImageIO.read(inputStream);
+                resourcesMapping.putImageMapping(rawPath, obfuscatedPath, -1, -1, imgsrc.getWidth(), imgsrc.getHeight(), null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+            } catch (Exception ex) {
+                resourcesMapping.putImageMapping(rawPath, obfuscatedPath, -1, -1, -1, -1, null, DigestUtils.md5Hex(orgByte), DigestUtils.md5Hex(orgByte));
+            }
+            return orgByte;
         }
     }
 
@@ -457,6 +455,18 @@ public class ResourcesObfuscator {
         byte[] b = os.toByteArray();
         os.close();
         return b;
+    }
+
+    private boolean isObfuscateFile(String extension) {
+        return isObfuscateImage(extension) || isObfuscateXml(extension);
+    }
+
+    private boolean isObfuscateImage(String extension) {
+        return extension.endsWith("png") || extension.endsWith("jpg") || extension.endsWith("jpeg") || extension.endsWith("webp");
+    }
+
+    private boolean isObfuscateXml(String extension) {
+        return extension.endsWith("xml");
     }
 
 
@@ -541,4 +551,71 @@ public class ResourcesObfuscator {
         }
         return true;
     }
+
+    /**
+     * 是否应该被过滤
+     * @param rawPath
+     * @return true 应该过滤不混淆 false不过滤，要混淆
+     */
+    private boolean shouldBeFilterContent(String rawPath) {
+        for (String rule : filterContentRules) {
+            if (rawPath.endsWith(rule)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
+    private byte[] obfuscateSo(String rawPath, InputStream inputStream) throws IOException {
+        byte[] bytes = IOUtils.toByteArray(inputStream);
+        inputStream.close();
+
+        File file = new File("so_temp");
+        if (file.exists()) {
+            file.delete();
+        }
+        file.mkdirs();
+
+        String soName = FileUtils.getFileName(rawPath);
+        File soFile = new File(file, soName);
+        FileOutputStream fos = new FileOutputStream(soFile);
+        IOUtils.write(bytes, fos);
+
+        try {
+            ElfHeader elfHeader = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, new ByteArrayProvider(bytes));
+            elfHeader.parse();
+
+            ElfSectionHeader[] x = elfHeader.getSections();
+            for (ElfSectionHeader header : x) {
+                String name = header.getNameAsString();
+                int shName = header.getName();
+                String type = header.getTypeAsString();
+                if (Objects.equals(name,".obdata")){
+                    header.setName(".hahaha");
+                }
+                System.err.println("Header:" + header.getNameAsString() +"-sh_name:" +shName+"-type:" + type);
+            }
+
+          /*  elfHeader.addSection(".hanee",0);
+            File obDir = new File(file,"obfuscator");
+            if (obDir.exists()){
+                obDir.delete();
+            }
+            obDir.mkdirs();
+            File obFile = new File(obDir,"ob_"+soName);*/
+            RandomAccessFile rfile = new RandomAccessFile(soFile ,"rw");
+            elfHeader.write(rfile,elfHeader.isBigEndian()? BigEndianDataConverter.INSTANCE: LittleEndianDataConverter.INSTANCE);
+
+
+        } catch (Exception e) {
+            System.err.println("xxxxxxxxxxxxxxxxxxxxxxxxxx:"+e.getMessage());
+            e.printStackTrace();
+        }
+
+
+        return bytes;
+    }
+
 }

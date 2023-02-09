@@ -1,5 +1,7 @@
 package com.bytedance.android.aabresguard.parser;
 
+import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
+
 import com.bytedance.android.aabresguard.model.xml.AabResGuardConfig;
 
 import org.dom4j.Document;
@@ -9,8 +11,6 @@ import org.dom4j.io.SAXReader;
 
 import java.nio.file.Path;
 import java.util.Iterator;
-
-import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
 
 /**
  * Created by YangJing on 2019/10/14 .
@@ -31,20 +31,19 @@ public class AabResGuardXmlParser {
         Element root = doc.getRootElement();
         for (Iterator i = root.elementIterator("issue"); i.hasNext(); ) {
             Element element = (Element) i.next();
-            String id = element.attributeValue("id");
-            if (id == null || !id.equals("whitelist")) {
-                continue;
-            }
+
             String isActive = element.attributeValue("isactive");
-            if (isActive != null && isActive.equals("true")) {
-                aabResGuardConfig.setUseWhiteList(true);
-            }
-            for (Iterator rules = element.elementIterator("path"); rules.hasNext(); ) {
-                Element ruleElement = (Element) rules.next();
-                String rule = ruleElement.attributeValue("value");
-                if (rule != null) {
-                    aabResGuardConfig.addWhiteList(rule);
-                }
+            boolean active = isActive != null && isActive.equals("true");
+            String id = element.attributeValue("id");
+            switch (id){
+                case "whitelist":
+                    aabResGuardConfig.setUseWhiteList(active);
+                    readWhiteListFromXml(aabResGuardConfig,element);
+                    break;
+                case "filterContent":
+                    aabResGuardConfig.setUseFilterContent(active);
+                    readFilterContent(aabResGuardConfig,element);
+                    break;
             }
         }
 
@@ -55,5 +54,25 @@ public class AabResGuardXmlParser {
         aabResGuardConfig.setStringFilterConfig(new StringFilterXmlParser(configPath).parse());
 
         return aabResGuardConfig;
+    }
+
+    private void readWhiteListFromXml(AabResGuardConfig aabResGuardConfig,Element element) {
+        for (Iterator rules = element.elementIterator("path"); rules.hasNext(); ) {
+            Element ruleElement = (Element) rules.next();
+            String rule = ruleElement.attributeValue("value");
+            if (rule != null) {
+                aabResGuardConfig.addWhiteList(rule);
+            }
+        }
+    }
+
+    private void readFilterContent(AabResGuardConfig aabResGuardConfig,Element element) {
+        for (Iterator rules = element.elementIterator("path"); rules.hasNext(); ) {
+            Element ruleElement = (Element) rules.next();
+            String rule = ruleElement.attributeValue("value");
+            if (rule != null) {
+                aabResGuardConfig.addFilterContent(rule);
+            }
+        }
     }
 }

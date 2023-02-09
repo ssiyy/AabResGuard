@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resproguard>
+    <!--白名单机制只作用于资源的specsName，用于代码中getIdentifier方法通过资源名加载id，不会keep住资源的路径。
+    如果想keep住资源原有的物理路径，可以使用mapping.txt，例如我想keep住R.drawable.ic_voice_1，
+    可以在mappingFile指向的文件添加：res/drawable-xxhdpi/ic_voice_1 -> res/drawable-xxhdpi/ic_voice_1-->
+    <issue id="whitelist" isactive="true">
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.drawable.ic_voice_1" />
+        <path value="iomnor.ncxvb.sdfwet.R.drawable.ic_voice_2" />
+        <path value="iomnor.ncxvb.sdfwet.R.drawable.ic_voice_3" />
+        <path value="iomnor.ncxvb.sdfwet.R.drawable.ic_voice_4" />
+        <path value="iomnor.ncxvb.sdfwet.R.drawable.ic_voice_5" />
+        <path value="iomnor.ncxvb.sdfwet.R.drawable.ic_voice_6" />
+        <path value="iomnor.ncxvb.sdfwet.R.drawable.ic_voice_7" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.drawable.ic_voice_1" />
+        <path value="com.mihua.ami.R.drawable.ic_voice_2" />
+        <path value="com.mihua.ami.R.drawable.ic_voice_3" />
+        <path value="com.mihua.ami.R.drawable.ic_voice_4" />
+        <path value="com.mihua.ami.R.drawable.ic_voice_5" />
+        <path value="com.mihua.ami.R.drawable.ic_voice_6" />
+        <path value="com.mihua.ami.R.drawable.ic_voice_7" />
+
+        <!--google相关-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.string.google_app_id" />
+        <path value="iomnor.ncxvb.sdfwet.R.string.gcm_defaultSenderId" />
+        <path value="iomnor.ncxvb.sdfwet.R.string.default_web_client_id" />
+        <path value="iomnor.ncxvb.sdfwet.R.string.ga_trackingId" />
+        <path value="iomnor.ncxvb.sdfwet.R.string.firebase_database_url" />
+        <path value="iomnor.ncxvb.sdfwet.R.string.google_api_key" />
+        <path value="iomnor.ncxvb.sdfwet.R.string.google_crash_reporting_api_key" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.string.google_app_id" />
+        <path value="com.mihua.ami.R.string.gcm_defaultSenderId" />
+        <path value="com.mihua.ami.R.string.default_web_client_id" />
+        <path value="com.mihua.ami.R.string.ga_trackingId" />
+        <path value="com.mihua.ami.R.string.firebase_database_url" />
+        <path value="com.mihua.ami.R.string.google_api_key" />
+        <path value="com.mihua.ami.R.string.google_crash_reporting_api_key" />
+
+        <!--Group相关-->
+        <!--user_fragment-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.id.view_male_bg" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_male_jine" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_male_jinbi" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_male_jine_content" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_male_recharge" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.view_female_bg" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_female_jinrishouyi" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_female_jinrishouyi_content" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.id.view_male_bg" />
+        <path value="com.mihua.ami.R.id.tv_male_jine" />
+        <path value="com.mihua.ami.R.id.tv_male_jinbi" />
+        <path value="com.mihua.ami.R.id.tv_male_jine_content" />
+        <path value="com.mihua.ami.R.id.tv_male_recharge" />
+        <path value="com.mihua.ami.R.id.view_female_bg" />
+        <path value="com.mihua.ami.R.id.tv_female_jinrishouyi" />
+        <path value="com.mihua.ami.R.id.tv_female_jinrishouyi_content" />
+
+        <!--login_activity_login-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_phone" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.edit_phone" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.view_phone_line" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.view_sms_line" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_smscode" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.edit_smscode" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_sendcode" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.btn_check_code" />
+        <!--c-->
+        <path value="com.mihua.ami.R.id.tv_phone" />
+        <path value="com.mihua.ami.R.id.edit_phone" />
+        <path value="com.mihua.ami.R.id.view_phone_line" />
+        <path value="com.mihua.ami.R.id.view_sms_line" />
+        <path value="com.mihua.ami.R.id.tv_smscode" />
+        <path value="com.mihua.ami.R.id.edit_smscode" />
+        <path value="com.mihua.ami.R.id.tv_sendcode" />
+        <path value="com.mihua.ami.R.id.btn_check_code" />
+
+        <!--item_hall_view-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_female_name" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.iv_female_country" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_female_age" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_female_separation" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_male_name" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_male_age" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.iv_male_country" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.id.tv_female_name" />
+        <path value="com.mihua.ami.R.id.iv_female_country" />
+        <path value="com.mihua.ami.R.id.tv_female_age" />
+        <path value="com.mihua.ami.R.id.tv_female_separation" />
+        <path value="com.mihua.ami.R.id.tv_male_name" />
+        <path value="com.mihua.ami.R.id.tv_male_age" />
+        <path value="com.mihua.ami.R.id.iv_male_country" />
+        <!--activity_enter_invite_code-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.id.ll_et_content" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tvPositive" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_invite_name" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_invite_uid" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.id.ll_et_content" />
+        <path value="com.mihua.ami.R.id.tvPositive" />
+        <path value="com.mihua.ami.R.id.tv_invite_name" />
+        <path value="com.mihua.ami.R.id.tv_invite_uid" />
+
+        <!--login_activity_check_phone-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_protrait_failed" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.btn_retry" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_portrait_doing" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_status_des" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.id.tv_protrait_failed" />
+        <path value="com.mihua.ami.R.id.btn_retry" />
+        <path value="com.mihua.ami.R.id.tv_portrait_doing" />
+        <path value="com.mihua.ami.R.id.tv_status_des" />
+
+        <!--activity_matching-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_stop_matching" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.iv_stop_matching" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_matching_content" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_matching" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.svg_view" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.id.tv_stop_matching" />
+        <path value="com.mihua.ami.R.id.iv_stop_matching" />
+        <path value="com.mihua.ami.R.id.tv_matching_content" />
+        <path value="com.mihua.ami.R.id.tv_matching" />
+        <path value="com.mihua.ami.R.id.svg_view" />
+
+        <!--mix_video_chat-->
+        <!--release-->
+        <path value="iomnor.ncxvb.sdfwet.R.id.containerFull" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.containerWindow" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.bottomMask" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.imgHangup" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.imgRecharge" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.video_tvHangup" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tvRecharge" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_time_count" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tvHangup" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.tv_hangup_text" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.clNickName" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.clChatView" />
+        <path value="iomnor.ncxvb.sdfwet.R.id.et_chat_input" />
+        <!--debug-->
+        <path value="com.mihua.ami.R.id.containerFull" />
+        <path value="com.mihua.ami.R.id.containerWindow" />
+        <path value="com.mihua.ami.R.id.bottomMask" />
+        <path value="com.mihua.ami.R.id.imgHangup" />
+        <path value="com.mihua.ami.R.id.imgRecharge" />
+        <path value="com.mihua.ami.R.id.video_tvHangup" />
+        <path value="com.mihua.ami.R.id.tvRecharge" />
+        <path value="com.mihua.ami.R.id.tv_time_count" />
+        <path value="com.mihua.ami.R.id.tvHangup" />
+        <path value="com.mihua.ami.R.id.tv_hangup_text" />
+        <path value="com.mihua.ami.R.id.clNickName" />
+        <path value="com.mihua.ami.R.id.clChatView" />
+        <path value="com.mihua.ami.R.id.et_chat_input" />
+    </issue>
+
+    <!--哪个文件不想混淆可以放在这儿-->
+    <issue id="filterContent" isactive="true">
+        <path value="exo_icon_fullscreen_enter.png"/>
+    </issue>
+
+    <!--资源过滤这个功能不启用-->
+    <filter isactive="false">
+        <rule value="*/arm64-v8a/*" />
+        <rule value="META-INF/*.RSA" />
+    </filter>
+</resproguard>

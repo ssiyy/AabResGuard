@@ -74,14 +74,34 @@ public class FileUtils {
         return "";
     }
 
+
     /**
      * Gets the file name in a pathname, AKA its last element.
      *
-     * @param path A path.
+     * @param url A path.
      * @return The last element of the path, possibly the entire path for root paths.
      */
-    public static String getFileName(String path) {
-        int start = path.replace('\\', '/').lastIndexOf("/") + 1;
-        return path.substring(start, path.length());
+    public static String getFileName(String url) {
+        if (!Strings.isNullOrEmpty(url)) {
+            int fragment = url.lastIndexOf('#');
+            if (fragment > 0) {
+                url = url.substring(0, fragment);
+            }
+
+            int query = url.lastIndexOf('?');
+            if (query > 0) {
+                url = url.substring(0, query);
+            }
+
+            int filenamePos = url.lastIndexOf('/');
+            String filename =
+                    0 <= filenamePos ? url.substring(filenamePos + 1) : url;
+
+            // if the filename contains special characters, we don't
+            // consider it valid for our matching purposes:
+            return filename;
+        }
+
+        return "";
     }
 }

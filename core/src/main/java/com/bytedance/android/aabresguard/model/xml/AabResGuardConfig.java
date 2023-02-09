@@ -13,6 +13,9 @@ public class AabResGuardConfig {
     private boolean useWhiteList;
     private Set<String> whiteList = new HashSet<>();
 
+    private boolean useFilterContent;
+    private Set<String> filterContent = new HashSet<>();
+
 
     public FileFilterConfig getFileFilter() {
         return fileFilter;
@@ -36,6 +39,22 @@ public class AabResGuardConfig {
 
     public void addWhiteList(String whiteRule) {
         this.whiteList.add(whiteRule);
+    }
+
+    public boolean isUseFilterContent() {
+        return useFilterContent;
+    }
+
+    public void setUseFilterContent(boolean useFilterContent) {
+        this.useFilterContent = useFilterContent;
+    }
+
+    public Set<String> getFilterContent() {
+        return filterContent;
+    }
+
+    public void addFilterContent(String filterContent) {
+        this.filterContent.add(filterContent);
     }
 
     public StringFilterConfig getStringFilterConfig() {

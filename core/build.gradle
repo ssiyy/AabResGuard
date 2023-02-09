@@ -13,6 +13,7 @@ buildscript {
 apply plugin: 'java-library'
 apply plugin: "com.google.protobuf"
 apply plugin: "com.github.johnrengelman.shadow"
+apply from: rootProject.file("core/aab/exec_aab.gradle")
 apply from: rootProject.file('gradle/publish-shadow.gradle')
 
 [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
@@ -42,7 +43,6 @@ dependencies {
     annotationProcessor "com.google.auto.value:auto-value:1.5.2"
     implementation "com.google.auto.value:auto-value:1.5.2"
     shadow group: "org.sejda.imageio", name: "webp-imageio", version: "0.1.6"
-    shadow "com.googlecode.htmlcompressor:htmlcompressor:1.5.2"
     shadow group: 'org.dom4j', name: 'dom4j', version: '2.1.0'
 
     shadow "org.apache.commons:commons-collections4:4.3"

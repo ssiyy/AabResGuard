@@ -1,0 +1,109 @@
+/**
+ * 需要混淆资源的aab
+ */
+def obfuscateInputAabFileName = "hanee1.2.1_release.aab"
+
+/**
+ * 资源混淆之后aab的输出路径
+ */
+def obfuscateOutputAabFileName = "obfuscate_hanee1.2.1_release.aab"
+
+
+def rootPath = rootProject.rootDir.absolutePath
+
+/**
+ * 输入的apks文件名字
+ */
+def outPutApksFileDir = "${rootPath}/core/aab/temp/${rootProject.name}__temp.apks"
+
+
+/**
+ * 将aab转换成apks
+ */
+task aab_to_apks(type: Exec) {
+    description "将aab转换成apks"
+
+    workingDir "./aab"
+    commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "java -jar bundletool.jar build-apks " +
+            "--mode=universal " +
+            "--overwrite " +
+            "--bundle=obfuscate/${obfuscateOutputAabFileName} " +
+            "--output=${outPutApksFileDir}"
+}
+
+/**
+ * 将aab安装到手机
+ */
+task install_aab(type: Exec) {
+    group "shadow"
+    description "将aab安装到手机"
+    dependsOn aab_to_apks
+
+    workingDir "./aab"
+    commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "java -jar bundletool.jar install-apks --apks=${outPutApksFileDir}"
+}
+
+/**
+ * 将aab转换成apk
+ */
+task aab_to_apk(type: Copy) {
+    group "shadow"
+    description "将aab转换成apk"
+    dependsOn aab_to_apks
+
+    def apkName = "${rootProject.name}_new_.apk"
+
+    from project.zipTree("${outPutApksFileDir}")
+    into "aab"
+    include "*.apk"
+    rename "universal.apk", apkName
+
+    doLast {
+        System.out.println("aab->apk转换完成，路径：${destinationDir.absolutePath}\\${apkName}")
+    }
+}
+
+task deleteObfuscateRes(type: Delete) {
+    def obfuscateDir = new File("${rootPath}/core/aab/obfuscate")
+    if (obfuscateDir.exists()) {
+        delete obfuscateDir
+    }
+    doLast {
+        obfuscateDir.mkdir()
+    }
+}
+
+/**
+ * 混淆aab
+ */
+task obfuscate_aab(type: Exec) {
+    group "shadow"
+    description "混淆aab资源文件"
+    dependsOn deleteObfuscateRes,shadowJar
+
+
+    workingDir "./aab"
+    commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "java -jar ${project.buildDir}/libs/AabResGuard-0.1.9.jar obfuscate-bundle " +
+            "--merge-duplicated-res=true " +  //资源文件去重
+            "--bundle=${obfuscateInputAabFileName} " +
+            "--output=${rootPath}/core/aab/obfuscate/${obfuscateOutputAabFileName} " +
+            "--config=config.xml " +
+            "--mapping=mapping.txt "
+}
+
+
+static def chooseCmdBySys() {
+    if (isWindows()) "cmd" else "bash";
+}
+
+static def chooseCBySys() {
+    if (isWindows()) "/c" else "-c"
+}
+
+/**
+ * 判断当前运行的平台
+ * @return
+ */
+static def isWindows() {
+    return org.gradle.internal.os.OperatingSystem.current().isWindows()
+}

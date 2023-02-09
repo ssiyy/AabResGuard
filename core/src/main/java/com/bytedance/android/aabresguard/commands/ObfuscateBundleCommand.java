@@ -1,5 +1,9 @@
 package com.bytedance.android.aabresguard.commands;
 
+import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
+import static com.bytedance.android.aabresguard.utils.FileOperation.getNetFileSizeDescription;
+import static com.bytedance.android.aabresguard.utils.exception.CommandExceptionPreconditions.checkFlagPresent;
+
 import com.android.tools.build.bundletool.flags.Flag;
 import com.android.tools.build.bundletool.flags.ParsedFlags;
 import com.android.tools.build.bundletool.model.AppBundle;
@@ -27,11 +31,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
-
-import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileDoesNotExist;
-import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileExistsAndReadable;
-import static com.bytedance.android.aabresguard.utils.FileOperation.getNetFileSizeDescription;
-import static com.bytedance.android.aabresguard.utils.exception.CommandExceptionPreconditions.checkFlagPresent;
 
 /**
  * Command responsible for obfuscate an App Bundle's resources from App Bundle file.
@@ -145,6 +144,7 @@ public abstract class ObfuscateBundleCommand {
         Path path = CONFIG_FLAG.getRequiredValue(flags);
         AabResGuardConfig config = new AabResGuardXmlParser(path).parse();
         builder.setWhiteList(config.getWhiteList());
+        builder.setFilterContent(config.getFilterContent());
         if (config.getFileFilter() != null) {
             builder.setFilterFile(config.getFileFilter().isActive());
             builder.setFileFilterRules(config.getFileFilter().getRules());
@@ -214,7 +214,7 @@ public abstract class ObfuscateBundleCommand {
             if (getMappingPath().isPresent()) {
                 mappingPath = getMappingPath().get();
             }
-            ResourcesObfuscator obfuscator = new ResourcesObfuscator(getBundlePath(), appBundle, getWhiteList(), getOutputPath().getParent(), mappingPath);
+            ResourcesObfuscator obfuscator = new ResourcesObfuscator(getBundlePath(), appBundle, getWhiteList(), getFilterContent(),getOutputPath().getParent(), mappingPath);
             appBundle = obfuscator.obfuscate();
         }
         // package bundle
@@ -268,6 +268,8 @@ public abstract class ObfuscateBundleCommand {
 
     public abstract Set<String> getWhiteList();
 
+    public abstract Set<String> getFilterContent();
+
     public abstract Optional<Set<String>> getFileFilterRules();
 
     public abstract Optional<Boolean> getFilterFile();
@@ -288,6 +290,8 @@ public abstract class ObfuscateBundleCommand {
         public abstract Builder setOutputPath(Path outputPath);
 
         public abstract Builder setWhiteList(Set<String> whiteList);
+
+        public abstract Builder setFilterContent(Set<String> filterContent);
 
         public abstract Builder setRemoveStr(Boolean removeStr);
 
