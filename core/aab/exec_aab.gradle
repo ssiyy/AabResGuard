@@ -1,7 +1,7 @@
 /**
  * 需要混淆资源的aab
  */
-def obfuscateInputAabFileName = "hanee1.2.1_release.aab"
+def obfuscateInputAabFileName = "flutter_app.aab"
 
 /**
  * 资源混淆之后aab的输出路径
@@ -89,6 +89,18 @@ task obfuscate_aab(type: Exec) {
             "--output=${rootPath}/core/aab/obfuscate/${obfuscateOutputAabFileName} " +
             "--config=config.xml " +
             "--mapping=mapping.txt "
+}
+
+/**
+ * llvm-readelf
+ */
+task llvm_readelf(type: Exec) {
+    group "shadow"
+    description "llvm-readelf"
+
+    commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "${projectDir.absolutePath}/aab/llvm/llvm-readelf.exe -S " +
+            "${projectDir.absolutePath}/aab/so_temp/base/assets/motion/libxt2.0.3_a.so"
+//            "${projectDir.absolutePath}/aab/so_temp/base/assets/motion/obfuscator/libxt2.0.3_a.so"
 }
 
 

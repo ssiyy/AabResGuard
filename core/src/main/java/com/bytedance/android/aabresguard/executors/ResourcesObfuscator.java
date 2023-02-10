@@ -26,10 +26,17 @@ import com.bytedance.android.aabresguard.bundle.ResourcesTableOperation;
 import com.bytedance.android.aabresguard.model.ResourcesMapping;
 import com.bytedance.android.aabresguard.obfuscation.ResGuardStringBuilder;
 import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
+import com.bytedance.android.aabresguard.utils.ConsoleColors;
 import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
+import com.bytedance.android.aabresguard.utils.buff.IoBuffer;
+import com.bytedance.android.aabresguard.utils.elf.BigEndianDataConverter;
+import com.bytedance.android.aabresguard.utils.elf.ByteArrayProvider;
+import com.bytedance.android.aabresguard.utils.elf.ElfHeader;
+import com.bytedance.android.aabresguard.utils.elf.LittleEndianDataConverter;
+import com.bytedance.android.aabresguard.utils.elf.RethrowContinuesFactory;
 import com.bytedance.android.aabresguard.utils.ninepatch.GraphicsUtilities;
 import com.google.common.collect.ImmutableMap;
 
@@ -41,8 +48,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -299,6 +308,7 @@ public class ResourcesObfuscator {
                 String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
                 if (isObfuscateFile(extension) && shouldBeFilterContent(bundleRawPath)) {
                     byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+
                     byte[] obfuscatorByte = obfuscatorRawContent(bundleRawPath, orgByte);
                     ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(entry.getPath().toString(), obfuscatorByte);
                     obfuscateEntries.add(obfuscatedEntry);
@@ -318,11 +328,15 @@ public class ResourcesObfuscator {
     }
 
     private byte[] obfuscatorRawContent(String bundleRawPath, byte[] orgByte) {
-        String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
-        if (isObfuscateImage(extension)) {
-            return obfuscatorRandomPixel(bundleRawPath, bundleRawPath, orgByte, extension);
-        } else if (extension.endsWith("so")) {
-
+        try {
+            String extension = FileUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+            if (isObfuscateImage(extension)) {
+                return obfuscatorRandomPixel(bundleRawPath, bundleRawPath, orgByte, extension);
+            } else if (isObfuscateSo(extension)) {
+                return obfuscateSo(bundleRawPath,orgByte);
+            }
+        } catch (Exception e) {
+            //
         }
         return orgByte;
     }
@@ -458,7 +472,7 @@ public class ResourcesObfuscator {
     }
 
     private boolean isObfuscateFile(String extension) {
-        return isObfuscateImage(extension) || isObfuscateXml(extension);
+        return isObfuscateImage(extension) || isObfuscateXml(extension) || isObfuscateSo(extension);
     }
 
     private boolean isObfuscateImage(String extension) {
@@ -467,6 +481,10 @@ public class ResourcesObfuscator {
 
     private boolean isObfuscateXml(String extension) {
         return extension.endsWith("xml");
+    }
+
+    private boolean isObfuscateSo(String extension){
+        return extension.endsWith("so");
     }
 
 
@@ -568,16 +586,16 @@ public class ResourcesObfuscator {
 
 
 
-    private byte[] obfuscateSo(String rawPath, InputStream inputStream) throws IOException {
-        byte[] bytes = IOUtils.toByteArray(inputStream);
-        inputStream.close();
-
-        File file = new File("so_temp");
+    private byte[] obfuscateSo(String rawPath, byte[] bytes) throws IOException {
+        //创建一个临时目录
+        File file = new File("so_temp/"+new File(rawPath).getParent().toString());
         if (file.exists()) {
             file.delete();
         }
         file.mkdirs();
+        ConsoleColors.redPrintln(file.getAbsolutePath());
 
+        //生成一个临时的so文件
         String soName = FileUtils.getFileName(rawPath);
         File soFile = new File(file, soName);
         FileOutputStream fos = new FileOutputStream(soFile);
@@ -587,7 +605,7 @@ public class ResourcesObfuscator {
             ElfHeader elfHeader = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, new ByteArrayProvider(bytes));
             elfHeader.parse();
 
-            ElfSectionHeader[] x = elfHeader.getSections();
+           /* ElfSectionHeader[] x = elfHeader.getSections();
             for (ElfSectionHeader header : x) {
                 String name = header.getNameAsString();
                 int shName = header.getName();
@@ -595,27 +613,30 @@ public class ResourcesObfuscator {
                 if (Objects.equals(name,".obdata")){
                     header.setName(".hahaha");
                 }
-                System.err.println("Header:" + header.getNameAsString() +"-sh_name:" +shName+"-type:" + type);
-            }
+            }*/
 
-          /*  elfHeader.addSection(".hanee",0);
-            File obDir = new File(file,"obfuscator");
-            if (obDir.exists()){
-                obDir.delete();
-            }
-            obDir.mkdirs();
-            File obFile = new File(obDir,"ob_"+soName);*/
+            IoBuffer f = IoBuffer.allocate(128);
+            f.put(generateData(128));
+            f.flip();
+
+            elfHeader.addSection(".hanee",f.getUnsigned());
+
             RandomAccessFile rfile = new RandomAccessFile(soFile ,"rw");
             elfHeader.write(rfile,elfHeader.isBigEndian()? BigEndianDataConverter.INSTANCE: LittleEndianDataConverter.INSTANCE);
 
 
         } catch (Exception e) {
-            System.err.println("xxxxxxxxxxxxxxxxxxxxxxxxxx:"+e.getMessage());
             e.printStackTrace();
         }
 
 
         return bytes;
+    }
+
+    private byte[] generateData(int size) {
+        byte[] bx = new byte[size];
+        new Random().nextBytes(bx);
+        return bx;
     }
 
 }
