@@ -31,12 +31,6 @@ import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
-import com.bytedance.android.aabresguard.utils.buff.IoBuffer;
-import com.bytedance.android.aabresguard.utils.elf.BigEndianDataConverter;
-import com.bytedance.android.aabresguard.utils.elf.ByteArrayProvider;
-import com.bytedance.android.aabresguard.utils.elf.ElfHeader;
-import com.bytedance.android.aabresguard.utils.elf.LittleEndianDataConverter;
-import com.bytedance.android.aabresguard.utils.elf.RethrowContinuesFactory;
 import com.bytedance.android.aabresguard.utils.ninepatch.GraphicsUtilities;
 import com.google.common.collect.ImmutableMap;
 
@@ -51,7 +45,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -602,29 +595,16 @@ public class ResourcesObfuscator {
         IOUtils.write(bytes, fos);
 
         try {
-            ElfHeader elfHeader = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, new ByteArrayProvider(bytes));
-            elfHeader.parse();
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    "D:\\unityWorkspace\\AabResGuard\\core\\aab\\llvm\\llvm-objcopy.exe",
+                    "--add-section", ".myFFF" + "=" + "D:\\unityWorkspace\\AabResGuard\\core\\aab\\llvm\\readme.txt",
+                    soFile.getAbsolutePath(),
+                    soFile.getParent().toString()+"/zzzzz.so"
+            );
 
-           /* ElfSectionHeader[] x = elfHeader.getSections();
-            for (ElfSectionHeader header : x) {
-                String name = header.getNameAsString();
-                int shName = header.getName();
-                String type = header.getTypeAsString();
-                if (Objects.equals(name,".obdata")){
-                    header.setName(".hahaha");
-                }
-            }*/
-
-            IoBuffer f = IoBuffer.allocate(128);
-            f.put(generateData(128));
-            f.flip();
-
-            elfHeader.addSection(".hanee",f.getUnsigned());
-
-            RandomAccessFile rfile = new RandomAccessFile(soFile ,"rw");
-            elfHeader.write(rfile,elfHeader.isBigEndian()? BigEndianDataConverter.INSTANCE: LittleEndianDataConverter.INSTANCE);
-
-
+            Process process = processBuilder.start();
+            int exitCode = process.waitFor();
+            ConsoleColors.redPrintln( soFile.getAbsolutePath()+":xxxxxxxxxxxxxxxxxxxx1111111xxxx:"+ exitCode);
         } catch (Exception e) {
             e.printStackTrace();
         }
