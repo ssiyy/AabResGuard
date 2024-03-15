@@ -1,1 +1,0 @@
-D:\android\sdk\ndk\23.1.7779620\toolchains\llvm\prebuilt\windows-x86_64\bin

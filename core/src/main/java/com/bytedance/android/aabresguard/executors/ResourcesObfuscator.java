@@ -26,7 +26,6 @@ import com.bytedance.android.aabresguard.bundle.ResourcesTableOperation;
 import com.bytedance.android.aabresguard.model.ResourcesMapping;
 import com.bytedance.android.aabresguard.obfuscation.ResGuardStringBuilder;
 import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
-import com.bytedance.android.aabresguard.utils.ConsoleColors;
 import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
@@ -326,7 +325,7 @@ public class ResourcesObfuscator {
             if (isObfuscateImage(extension)) {
                 return obfuscatorRandomPixel(bundleRawPath, bundleRawPath, orgByte, extension);
             } else if (isObfuscateSo(extension)) {
-                return obfuscateSo(bundleRawPath,orgByte);
+                return obfuscateSo(bundleRawPath, orgByte);
             }
         } catch (Exception e) {
             //
@@ -476,7 +475,7 @@ public class ResourcesObfuscator {
         return extension.endsWith("xml");
     }
 
-    private boolean isObfuscateSo(String extension){
+    private boolean isObfuscateSo(String extension) {
         return extension.endsWith("so");
     }
 
@@ -565,6 +564,7 @@ public class ResourcesObfuscator {
 
     /**
      * 是否应该被过滤
+     *
      * @param rawPath
      * @return true 应该过滤不混淆 false不过滤，要混淆
      */
@@ -578,15 +578,13 @@ public class ResourcesObfuscator {
     }
 
 
-
     private byte[] obfuscateSo(String rawPath, byte[] bytes) throws IOException {
         //创建一个临时目录
-        File file = new File("so_temp/"+new File(rawPath).getParent().toString());
+        File file = new File("so_temp/" + new File(rawPath).getParent().toString());
         if (file.exists()) {
             file.delete();
         }
         file.mkdirs();
-        ConsoleColors.redPrintln(file.getAbsolutePath());
 
         //生成一个临时的so文件
         String soName = FileUtils.getFileName(rawPath);
@@ -595,7 +593,10 @@ public class ResourcesObfuscator {
         IOUtils.write(bytes, fos);
 
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder(
+
+            ResourceCopier.copyResourcesFromJar("llvm/", "/llllllxxxxx");
+
+         /*   ProcessBuilder processBuilder = new ProcessBuilder(
                     "D:\\unityWorkspace\\AabResGuard\\core\\aab\\llvm\\llvm-objcopy.exe",
                     "--add-section", ".myFFF" + "=" + "D:\\unityWorkspace\\AabResGuard\\core\\aab\\llvm\\readme.txt",
                     soFile.getAbsolutePath(),
@@ -604,7 +605,7 @@ public class ResourcesObfuscator {
 
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
-            ConsoleColors.redPrintln( soFile.getAbsolutePath()+":xxxxxxxxxxxxxxxxxxxx1111111xxxx:"+ exitCode);
+            ConsoleColors.redPrintln( soFile.getAbsolutePath()+":xxxxxxxxxxxxxxxxxxxx1111111xxxx:"+ exitCode);*/
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -612,6 +613,7 @@ public class ResourcesObfuscator {
 
         return bytes;
     }
+
 
     private byte[] generateData(int size) {
         byte[] bx = new byte[size];
