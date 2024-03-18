@@ -58,6 +58,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -608,7 +609,7 @@ public class ResourcesObfuscator {
 
             //生成写入so库ELFHeader随机字符串
             Path outPutFile = Paths.get(destinationDir, "output.txt");
-            String outPutFileContent = "Hello, World!";
+            String outPutFileContent = UUID.randomUUID() + ":" + String.valueOf(System.currentTimeMillis());
             Files.write(outPutFile, outPutFileContent.getBytes(), StandardOpenOption.CREATE);
             String outputFileString = outPutFile.toFile().getAbsolutePath();
             ConsoleColors.redPrintln("outputFileString:" + outputFileString);
@@ -631,12 +632,14 @@ public class ResourcesObfuscator {
 
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
-            ConsoleColors.redPrintln(soFile.getAbsolutePath() + ":" + exitCode);
+            ConsoleColors.greenPrintln("result:" + soFile.getAbsolutePath() + ":" + exitCode);
+            if (exitCode == 0) {
+                //如果混淆成功就替换原始的字节数组
+                return Files.readAllBytes(Paths.get(obfuscatorSoFileString));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
         return bytes;
     }
 

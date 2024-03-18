@@ -107,7 +107,8 @@ task llvm_readelf(type: Exec) {
     }
 
     commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "${projectDir.absolutePath}/aab/llvm/llvm-readelf.exe -S " +
-            "D:\\unityWorkspace\\AabResGuard\\core\\aab\\obfuscator_so\\base\\assets\\motion\\libxt2.0.3_x64.so"
+//            "D:\\unityWorkspace\\AabResGuard\\core\\aab\\obfuscator_so\\base\\assets\\motion\\libxt2.0.3_x64.so"
+            "D:\\unityWorkspace\\AabResGuard\\core\\aab\\obfuscate\\obfuscate_hanee1.2.1_release\\base\\lib\\arm64-v8a\\libapp.so"
 }
 
 
