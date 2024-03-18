@@ -582,7 +582,14 @@ public class ResourcesObfuscator {
         return true;
     }
 
-
+    /**
+     * 混淆so库
+     *
+     * @param rawPath
+     * @param bytes
+     * @return
+     * @throws IOException
+     */
     private byte[] obfuscateSo(String rawPath, byte[] bytes) throws IOException {
         //创建一个临时目录
         String relativePath = new File(rawPath).getParent();
@@ -603,7 +610,15 @@ public class ResourcesObfuscator {
             String sourceResourcesPath = "llvm/";
             String destinationDir = "llvm";
             ResourceCopier.copyResourcesFromJar(sourceResourcesPath, destinationDir);
-            Path objCopyPath = Paths.get(destinationDir, "llvm-objcopy.exe");
+
+            String cmdName = "";
+            if (isWinSys()) {
+                cmdName = "llvm-objcopy.exe";
+            } else {
+                ConsoleColors.redPrintln("非windows系统不支持，要支持再找我");
+            }
+
+            Path objCopyPath = Paths.get(destinationDir, cmdName);
             String cmdPath = objCopyPath.toFile().getAbsolutePath();
             ConsoleColors.redPrintln("cmdPath:" + cmdPath);
 
@@ -644,10 +659,27 @@ public class ResourcesObfuscator {
     }
 
 
-    private byte[] generateData(int size) {
-        byte[] bx = new byte[size];
-        new Random().nextBytes(bx);
-        return bx;
+    /**
+     * 判断下是不是windows操作系统
+     *
+     * @return
+     */
+    private boolean isWinSys() {
+        String os = System.getProperty("os.name").toLowerCase();
+
+        if (os.contains("win")) {
+            ConsoleColors.purplePrintln("当前运行的是Windows操作系统");
+            return true;
+        } else if (os.contains("mac")) {
+            ConsoleColors.purplePrintln("当前运行的是Mac操作系统");
+            return false;
+        } else if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
+            ConsoleColors.purplePrintln("当前运行的是UNIX或Linux操作系统");
+            return false;
+        } else {
+            ConsoleColors.purplePrintln("无法识别当前操作系统");
+            return false;
+        }
     }
 
 }
