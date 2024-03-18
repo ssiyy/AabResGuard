@@ -26,6 +26,7 @@ import com.bytedance.android.aabresguard.bundle.ResourcesTableOperation;
 import com.bytedance.android.aabresguard.model.ResourcesMapping;
 import com.bytedance.android.aabresguard.obfuscation.ResGuardStringBuilder;
 import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
+import com.bytedance.android.aabresguard.utils.ConsoleColors;
 import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
 import com.bytedance.android.aabresguard.utils.TimeClock;
@@ -44,7 +45,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -580,32 +584,54 @@ public class ResourcesObfuscator {
 
     private byte[] obfuscateSo(String rawPath, byte[] bytes) throws IOException {
         //创建一个临时目录
-        File file = new File("so_temp/" + new File(rawPath).getParent().toString());
-        if (file.exists()) {
-            file.delete();
+        String relativePath = new File(rawPath).getParent();
+        File orgSoFile = new File("org_so/" + relativePath);
+        if (orgSoFile.exists()) {
+            orgSoFile.delete();
         }
-        file.mkdirs();
+        orgSoFile.mkdirs();
 
         //生成一个临时的so文件
         String soName = FileUtils.getFileName(rawPath);
-        File soFile = new File(file, soName);
+        File soFile = new File(orgSoFile, soName);
         FileOutputStream fos = new FileOutputStream(soFile);
         IOUtils.write(bytes, fos);
 
         try {
+            //拷贝llvm命令，获取objcopy命令路径
+            String sourceResourcesPath = "llvm/";
+            String destinationDir = "llvm";
+            ResourceCopier.copyResourcesFromJar(sourceResourcesPath, destinationDir);
+            Path objCopyPath = Paths.get(destinationDir, "llvm-objcopy.exe");
+            String cmdPath = objCopyPath.toFile().getAbsolutePath();
+            ConsoleColors.redPrintln("cmdPath:" + cmdPath);
 
-            ResourceCopier.copyResourcesFromJar("llvm/", "/llllllxxxxx");
+            //生成写入so库ELFHeader随机字符串
+            Path outPutFile = Paths.get(destinationDir, "output.txt");
+            String outPutFileContent = "Hello, World!";
+            Files.write(outPutFile, outPutFileContent.getBytes(), StandardOpenOption.CREATE);
+            String outputFileString = outPutFile.toFile().getAbsolutePath();
+            ConsoleColors.redPrintln("outputFileString:" + outputFileString);
 
-         /*   ProcessBuilder processBuilder = new ProcessBuilder(
-                    "D:\\unityWorkspace\\AabResGuard\\core\\aab\\llvm\\llvm-objcopy.exe",
-                    "--add-section", ".myFFF" + "=" + "D:\\unityWorkspace\\AabResGuard\\core\\aab\\llvm\\readme.txt",
+            //插入随机字符串之后so生成的目录
+            File obfuscatorSoFile = new File("obfuscator_so/" + relativePath);
+            if (obfuscatorSoFile.exists()) {
+                obfuscatorSoFile.delete();
+            }
+            obfuscatorSoFile.mkdirs();
+            String obfuscatorSoFileString = obfuscatorSoFile.getAbsolutePath() + "/" + soFile.getName();
+            ConsoleColors.redPrintln("obfuscatorSoFileString:" + obfuscatorSoFileString);
+
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    "" + cmdPath + "",
+                    "--add-section", ".myFFF" + "=" + "" + outputFileString + "",
                     soFile.getAbsolutePath(),
-                    soFile.getParent().toString()+"/zzzzz.so"
+                    obfuscatorSoFileString
             );
 
             Process process = processBuilder.start();
             int exitCode = process.waitFor();
-            ConsoleColors.redPrintln( soFile.getAbsolutePath()+":xxxxxxxxxxxxxxxxxxxx1111111xxxx:"+ exitCode);*/
+            ConsoleColors.redPrintln(soFile.getAbsolutePath() + ":" + exitCode);
         } catch (Exception e) {
             e.printStackTrace();
         }

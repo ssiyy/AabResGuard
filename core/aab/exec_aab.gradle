@@ -98,11 +98,16 @@ task llvm_readelf(type: Exec) {
     group "shadow"
     description "llvm-readelf"
 
-    commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "${projectDir.absolutePath}/aab/llvm/llvm-readelf.exe -S " +
-//            "${projectDir.absolutePath}/aab/so_temp/base/assets/motion/libxt2.0.3_a.so"
-            "D:\\unityWorkspace\\AabResGuard\\core\\aab\\so_temp\\base\\lib\\armeabi-v7a\\zzzzz.so"
+    doFirst{
+        System.out.println("D:\\unityWorkspace\\AabResGuard\\core\\aab\\org_so\\base\\assets\\motion\\libxt2.0.3_x64.so")
+        exec{
+            commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "${projectDir.absolutePath}/aab/llvm/llvm-readelf.exe -S " +
+                    "D:\\unityWorkspace\\AabResGuard\\core\\aab\\org_so\\base\\assets\\motion\\libxt2.0.3_x64.so"
+        }
+    }
 
-//            "${projectDir.absolutePath}/aab/so_temp/base/assets/motion/obfuscator/libxt2.0.3_a.so"
+    commandLine "${chooseCmdBySys()}", "${chooseCBySys()}", "${projectDir.absolutePath}/aab/llvm/llvm-readelf.exe -S " +
+            "D:\\unityWorkspace\\AabResGuard\\core\\aab\\obfuscator_so\\base\\assets\\motion\\libxt2.0.3_x64.so"
 }
 
 
