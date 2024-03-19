@@ -612,10 +612,15 @@ public class ResourcesObfuscator {
             ResourceCopier.copyResourcesFromJar(sourceResourcesPath, destinationDir);
 
             String cmdName = "";
-            if (isWinSys()) {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                ConsoleColors.purplePrintln("当前运行的是Windows操作系统");
                 cmdName = "llvm-objcopy.exe";
+            } else if (os.contains("mac")) {
+                ConsoleColors.purplePrintln("当前运行的是Mac操作系统");
+                cmdName = "llvm-objcopy";
             } else {
-                ConsoleColors.redPrintln("非windows系统不支持，要支持再找我");
+                ConsoleColors.redPrintln("系统不支持，要支持再找我");
             }
 
             Path objCopyPath = Paths.get(destinationDir, cmdName);
@@ -660,29 +665,4 @@ public class ResourcesObfuscator {
         }
         return bytes;
     }
-
-
-    /**
-     * 判断下是不是windows操作系统
-     *
-     * @return
-     */
-    private boolean isWinSys() {
-        String os = System.getProperty("os.name").toLowerCase();
-
-        if (os.contains("win")) {
-            ConsoleColors.purplePrintln("当前运行的是Windows操作系统");
-            return true;
-        } else if (os.contains("mac")) {
-            ConsoleColors.purplePrintln("当前运行的是Mac操作系统");
-            return false;
-        } else if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
-            ConsoleColors.purplePrintln("当前运行的是UNIX或Linux操作系统");
-            return false;
-        } else {
-            ConsoleColors.purplePrintln("无法识别当前操作系统");
-            return false;
-        }
-    }
-
 }

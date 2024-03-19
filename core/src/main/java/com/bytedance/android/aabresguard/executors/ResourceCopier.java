@@ -3,7 +3,6 @@ package com.bytedance.android.aabresguard.executors;
 import com.bytedance.android.aabresguard.utils.ConsoleColors;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.JarURLConnection;
@@ -26,7 +25,7 @@ import java.util.jar.JarFile;
  */
 public class ResourceCopier {
 
-    public static void copyResourcesFromJar(String sourceResourcesPath, String destinationDir) throws IOException {
+    public static void copyResourcesFromJar(String sourceResourcesPath, String destinationDir) throws Exception {
         ClassLoader classLoader = ResourceCopier.class.getClassLoader();
         URL resourceUrl = classLoader.getResource(sourceResourcesPath);
 
