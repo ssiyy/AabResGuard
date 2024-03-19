@@ -629,6 +629,8 @@ public class ResourcesObfuscator {
             String outputFileString = outPutFile.toFile().getAbsolutePath();
             ConsoleColors.redPrintln("outputFileString:" + outputFileString);
 
+            String keyStr = ".myWAW";
+
             //插入随机字符串之后so生成的目录
             File obfuscatorSoFile = new File("obfuscator_so/" + relativePath);
             if (obfuscatorSoFile.exists()) {
@@ -640,7 +642,8 @@ public class ResourcesObfuscator {
 
             ProcessBuilder processBuilder = new ProcessBuilder(
                     "" + cmdPath + "",
-                    "--add-section", ".myFFF" + "=" + "" + outputFileString + "",
+                    "--add-section", keyStr + "=" + "" + outputFileString,
+                    "--set-section-flags", keyStr + "=noload,readonly",
                     soFile.getAbsolutePath(),
                     obfuscatorSoFileString
             );
