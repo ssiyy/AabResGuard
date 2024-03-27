@@ -95,5 +95,7 @@ public class ConsoleColors {
         System.out.println(ConsoleColors.PURPLE + printMsg + ConsoleColors.RESET);
     }
 
-
+    public static void normalPrintln(String printMsg) {
+        System.out.println(printMsg);
+    }
 }

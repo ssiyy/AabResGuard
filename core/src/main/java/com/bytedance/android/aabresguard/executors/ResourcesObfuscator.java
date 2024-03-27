@@ -29,8 +29,15 @@ import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
 import com.bytedance.android.aabresguard.utils.ConsoleColors;
 import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.FileUtils;
+import com.bytedance.android.aabresguard.utils.OS;
+import com.bytedance.android.aabresguard.utils.OSDetection;
+import com.bytedance.android.aabresguard.utils.ResourceCopier;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
+import com.bytedance.android.aabresguard.utils.elf.ByteArrayProvider;
+import com.bytedance.android.aabresguard.utils.elf.ElfHeader;
+import com.bytedance.android.aabresguard.utils.elf.ElfSectionHeader;
+import com.bytedance.android.aabresguard.utils.elf.RethrowContinuesFactory;
 import com.bytedance.android.aabresguard.utils.ninepatch.GraphicsUtilities;
 import com.google.common.collect.ImmutableMap;
 
@@ -612,20 +619,17 @@ public class ResourcesObfuscator {
             ResourceCopier.copyResourcesFromJar(sourceResourcesPath, destinationDir);
 
             String cmdName = "";
-            String os = System.getProperty("os.name").toLowerCase();
-            if (os.contains("win")) {
-                ConsoleColors.purplePrintln("当前运行的是Windows操作系统");
-                cmdName = "llvm-objcopy.exe";
-            } else if (os.contains("mac")) {
-                ConsoleColors.purplePrintln("当前运行的是Mac操作系统");
-                cmdName = "llvm-objcopy";
-            } else {
-                ConsoleColors.redPrintln("系统不支持，要支持再找我");
+            if (OSDetection.isWindows()) {
+                cmdName = "windows" + File.separator + "llvm-objcopy.exe";
+            } else if (OSDetection.isMacOSX()) {
+                cmdName = "macosx" + File.separator + "llvm-objcopy";
             }
 
             Path objCopyPath = Paths.get(destinationDir, cmdName);
             String cmdPath = objCopyPath.toFile().getAbsolutePath();
             ConsoleColors.redPrintln("cmdPath:" + cmdPath);
+
+            executionCommand(cmdPath);
 
             //生成写入so库ELFHeader随机字符串
             Path outPutFile = Paths.get(destinationDir, "output.txt");
@@ -634,7 +638,7 @@ public class ResourcesObfuscator {
             String outputFileString = outPutFile.toFile().getAbsolutePath();
             ConsoleColors.redPrintln("outputFileString:" + outputFileString);
 
-            String keyStr = ".myWAW";
+            String keyStr = ".mywaw";
 
             //插入随机字符串之后so生成的目录
             File obfuscatorSoFile = new File("obfuscator_so/" + relativePath);
@@ -646,8 +650,9 @@ public class ResourcesObfuscator {
             ConsoleColors.redPrintln("obfuscatorSoFileString:" + obfuscatorSoFileString);
 
             ProcessBuilder processBuilder = new ProcessBuilder(
-                    "" + cmdPath + "",
-                    "--add-section", keyStr + "=" + "" + outputFileString,
+                    cmdPath,
+                    "--add-section",
+                    keyStr + "=" + "" + outputFileString,
                     "--set-section-flags", keyStr + "=noload,readonly",
                     soFile.getAbsolutePath(),
                     obfuscatorSoFileString
@@ -657,6 +662,7 @@ public class ResourcesObfuscator {
             int exitCode = process.waitFor();
             ConsoleColors.greenPrintln("result:" + soFile.getAbsolutePath() + ":" + exitCode);
             if (exitCode == 0) {
+                printObfuscateSO(obfuscatorSoFileString);
                 //如果混淆成功就替换原始的字节数组
                 return Files.readAllBytes(Paths.get(obfuscatorSoFileString));
             }
@@ -664,5 +670,37 @@ public class ResourcesObfuscator {
             e.printStackTrace();
         }
         return bytes;
+    }
+
+    private static void printObfuscateSO(String path) {
+        try {
+            ElfHeader elfHeader = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, new ByteArrayProvider(Files.readAllBytes(Paths.get(path))));
+            elfHeader.parse();
+
+            ElfSectionHeader header = elfHeader.getSection(".mywaw");
+            ConsoleColors.normalPrintln("addSection is :" + header.getNameAsString() + ",data:" + new String(header.getData()) + ",flags:" + header.getFlags() + ",type:" + header.getTypeAsString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void executionCommand(String filePath) {
+        try {
+            File file = new File(filePath);
+            if (file.canRead() && file.exists()) {
+                boolean result = file.setExecutable(true);
+                if (!result) {
+                    ConsoleColors.redPrintln("cmd can not executable");
+                    if (OSDetection.isMacOSX()) {
+                        OS.exec(new String[]{"chomd", "755", filePath});
+                        ConsoleColors.redPrintln("cmd can not executable 755 suc");
+                    }
+                }
+            } else {
+                ConsoleColors.redPrintln("cmd can not read");
+            }
+        } catch (Exception e) {
+            ConsoleColors.redPrintln("cmd 755 " + e.getMessage());
+        }
     }
 }
