@@ -1,7 +1,7 @@
 /**
  * 需要混淆资源的aab
  */
-def obfuscateInputAabFileName = "app-xiangyue-qarelease.aab"
+def obfuscateInputAabFileName = "VIPARTY_v1.2.00_1200-dev-release.aab"
 
 /**
  * 资源混淆之后aab的输出路径
