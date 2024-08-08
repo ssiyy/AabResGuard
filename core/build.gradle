@@ -1,9 +1,15 @@
 buildscript {
     repositories {
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
+        maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter' }
+        maven { url 'https://maven.aliyun.com/nexus/content/repositories/google' }
+        google()
+        mavenCentral()
         jcenter()
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.8"
@@ -14,6 +20,7 @@ apply plugin: 'java-library'
 apply plugin: "com.google.protobuf"
 apply plugin: "com.github.johnrengelman.shadow"
 apply from: rootProject.file('gradle/publish-shadow.gradle')
+apply from: rootProject.file("core/aab/exec_aab.gradle")
 
 [compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
 
@@ -42,6 +49,11 @@ dependencies {
     shadow group: 'org.dom4j', name: 'dom4j', version: '2.1.0'
     shadow deps.bundletool
 
+    shadow "com.github.usefulness:webp-imageio:0.2.0"
+//    shadow group: "org.sejda.imageio", name: "webp-imageio", version: "0.1.6"
+    shadow "cglib:cglib:2.2.2"
+    shadow "org.apache.commons:commons-collections4:4.3"
+
     testImplementation deps.gradle.agp
     testImplementation "com.android.tools.build:aapt2-proto:0.4.0"
     testImplementation group: 'org.dom4j', name: 'dom4j', version: '2.1.0'
@@ -66,7 +78,11 @@ shadowJar {
     version = versions[ARTIFACT_ID]
     classifier = ''
 
-    minimize()
+    minimize {
+        exclude(dependency('com.github.usefulness:.*:.*'))
+//        exclude(dependency('org.sejda.imageio:.*:.*'))
+        exclude(dependency('cglib:.*:.*'))
+    }
 
     from sourceSets.main.output
     configurations = [

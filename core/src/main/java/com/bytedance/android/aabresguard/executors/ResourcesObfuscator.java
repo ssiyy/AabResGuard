@@ -1,5 +1,14 @@
 package com.bytedance.android.aabresguard.executors;
 
+import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileDoesNotExist;
+import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getEntryNameByResourceName;
+import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getTypeNameByResourceName;
+import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.checkConfiguration;
+import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.updateEntryConfigValueList;
+import static com.bytedance.android.aabresguard.utils.FileOperation.getFilePrefixByFileName;
+import static com.bytedance.android.aabresguard.utils.FileOperation.getNameFromZipFilePath;
+import static com.bytedance.android.aabresguard.utils.FileOperation.getParentFromZipFilePath;
+
 import com.android.aapt.Resources;
 import com.android.tools.build.bundletool.model.AppBundle;
 import com.android.tools.build.bundletool.model.BundleModule;
@@ -15,6 +24,8 @@ import com.bytedance.android.aabresguard.bundle.ResourcesTableOperation;
 import com.bytedance.android.aabresguard.model.ResourcesMapping;
 import com.bytedance.android.aabresguard.obfuscation.ResGuardStringBuilder;
 import com.bytedance.android.aabresguard.parser.ResourcesMappingParser;
+import com.bytedance.android.aabresguard.siy.ObfuscateResUtils;
+import com.bytedance.android.aabresguard.siy.SiyUtils;
 import com.bytedance.android.aabresguard.utils.FileOperation;
 import com.bytedance.android.aabresguard.utils.TimeClock;
 import com.bytedance.android.aabresguard.utils.Utils;
@@ -36,15 +47,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
-
-import static com.android.tools.build.bundletool.model.utils.files.FilePreconditions.checkFileDoesNotExist;
-import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getEntryNameByResourceName;
-import static com.bytedance.android.aabresguard.bundle.AppBundleUtils.getTypeNameByResourceName;
-import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.checkConfiguration;
-import static com.bytedance.android.aabresguard.bundle.ResourcesTableOperation.updateEntryConfigValueList;
-import static com.bytedance.android.aabresguard.utils.FileOperation.getFilePrefixByFileName;
-import static com.bytedance.android.aabresguard.utils.FileOperation.getNameFromZipFilePath;
-import static com.bytedance.android.aabresguard.utils.FileOperation.getParentFromZipFilePath;
 
 /**
  * Created by YangJing on 2019/10/14 .
@@ -266,10 +268,30 @@ public class ResourcesObfuscator {
             String bundleRawPath = bundleModule.getName().getName() + "/" + entry.getPath().toString();
             String obfuscatedPath = obfuscatedEntryMap.get(bundleRawPath);
             if (obfuscatedPath != null) {
-                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, AppBundleUtils.readByte(bundleZipFile, entry, bundleModule));
+                //混淆资源
+                byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+                byte[] obfuscatorByte = ObfuscateResUtils.obfuscatorResContent(bundleRawPath, obfuscatedPath, orgByte);
+                ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(obfuscatedPath, obfuscatorByte);
                 obfuscateEntries.add(obfuscatedEntry);
             } else {
-                obfuscateEntries.add(entry);
+                //如果不是资源文件会走到这儿来
+                // root
+                // assets
+                // lib
+                // dex
+
+                String extension = SiyUtils.getFileExtensionFromUrl(bundleRawPath).toLowerCase();
+
+                if (ObfuscateResUtils.isObfuscateFile(extension) ) {
+                    byte[] orgByte = AppBundleUtils.readByte(bundleZipFile, entry, bundleModule);
+
+                    byte[] obfuscatorByte = ObfuscateResUtils.obfuscatorRawContent(bundleRawPath, orgByte);
+                    ModuleEntry obfuscatedEntry = InMemoryModuleEntry.ofFile(entry.getPath().toString(), obfuscatorByte);
+                    obfuscateEntries.add(obfuscatedEntry);
+                } else {
+                    obfuscateEntries.add(entry);
+                }
+
             }
         }
         builder.setRawEntries(obfuscateEntries);

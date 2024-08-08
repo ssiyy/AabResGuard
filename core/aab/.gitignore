@@ -1,0 +1,8 @@
+/obfuscate
+/temp
+/splits
+/so_temp
+/org_so/base/
+/llvm/
+/obfuscator_so/
+/*.aab

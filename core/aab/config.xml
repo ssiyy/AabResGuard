@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resproguard>
+    <!--defaut property to set  -->
+    <issue id="property">
+        <!--whether use 7zip to repackage the signed apk, you must install the 7z command line version in window -->
+        <!--sudo apt-get install p7zip-full in linux -->
+        <!--and you must write the sign data fist, and i found that if we use linux, we can get a better result -->
+        <seventzip value="false" />
+        <!--the sign data file name in your apk, default must be META-INF-->
+        <!--generally, you do not need to change it if you dont change the meta file name in your apk-->
+        <metaname value="META-INF" />
+        <!--if keep root, res/drawable will be kept, it won't be changed to such as r/s-->
+        <keeproot value="false" />
+        <!--filter duplicate resource files-->
+        <mergeDuplicatedRes value="true" />
+    </issue>
+
+    <!--白名单机制只作用于资源的specsName，用于代码中getIdentifier方法通过资源名加载id，不会keep住资源的路径。
+     如果想keep住资源原有的物理路径，可以使用mapping.txt，例如我想keep住R.drawable.ic_voice_1，
+     可以在mappingFile指向的文件添加：res/drawable-xxhdpi/ic_voice_1 -> res/drawable-xxhdpi/ic_voice_1-->
+    <issue id="whitelist" isactive="true">
+        <!--字符串相关-->
+        <path value="com.yuxiu.xiangyue.R.string.*" />
+
+        <!--闪验-->
+        <path value="com.yuxiu.xiangyue.R.anim.umcsdk*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.umcsdk*" />
+        <path value="com.yuxiu.xiangyue.R.anim.shanyan_demo*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.shanyan_demo*" />
+        <path value="com.yuxiu.xiangyue.R.layout.layout_shanyan*" />
+        <path value="com.yuxiu.xiangyue.R.layout.shanyan_demo*" />
+        <path value="com.yuxiu.xiangyue.R.id.shanyan_view*" />
+        <path value="com.yuxiu.xiangyue.R.id.shanyan_demo*" />
+
+        <!--华为推送-->
+        <path value="com.yuxiu.xiangyue.R.string.hms_*" />
+        <path value="com.yuxiu.xiangyue.R.string.connect_server_fail_prompt_toast" />
+        <path value="com.yuxiu.xiangyue.R.string.getting_message_fail_prompt_toast" />
+        <path value="com.yuxiu.xiangyue.R.string.no_available_network_prompt_toast" />
+        <path value="com.yuxiu.xiangyue.R.string.third_app_*" />
+        <path value="com.yuxiu.xiangyue.R.string.upsdk_*" />
+        <path value="com.yuxiu.xiangyue.R.layout.hms*" />
+        <path value="com.yuxiu.xiangyue.R.layout.upsdk_*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.upsdk*" />
+        <path value="com.yuxiu.xiangyue.R.color.upsdk*" />
+        <path value="com.yuxiu.xiangyue.R.dimen.upsdk*" />
+        <path value="com.yuxiu.xiangyue.R.style.upsdk*" />
+        <path value="com.yuxiu.xiangyue.R.string.agc*" />
+        <path value="com.yuxiu.xiangyue.R.style.upsdkDlDialog" />
+        <path value="com.yuxiu.xiangyue.R.style.AppTheme" />
+        <path value="com.yuxiu.xiangyue.R.style.AppBaseTheme" />
+        <path value="com.yuxiu.xiangyue.R.dimen.upsdk_dialog_*" />
+        <path value="com.yuxiu.xiangyue.R.color.upsdk_*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.upsdk_*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.hms_*" />
+        <path value="com.yuxiu.xiangyue.R.layout.hms_*" />
+        <path value="com.yuxiu.xiangyue.R.id.hms_*" />
+
+
+        <!--友盟相关-->
+        <path value="com.yuxiu.xiangyue.R.string.com.crashlytics.*" />
+        <path value="com.yuxiu.xiangyue.R.string.umeng*" />
+        <path value="com.yuxiu.xiangyue.R.layout.umeng*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.umeng*" />
+        <path value="com.yuxiu.xiangyue.R.anim.umeng*" />
+        <path value="com.yuxiu.xiangyue.R.color.umeng*" />
+        <path value="com.yuxiu.xiangyue.R.style.*UM*" />
+        <path value="com.yuxiu.xiangyue.R.style.umeng*" />
+        <path value="com.yuxiu.xiangyue.R.id.umeng*" />
+        <path value="com.yuxiu.xiangyue.R.string.UM*" />
+
+        <!--icon-->
+        <path value="com.yuxiu.xiangyue.R.drawable.icon" />
+        <!--TBS相关-->
+        <path value="com.yuxiu.xiangyue.R.string.tb_*" />
+        <path value="com.yuxiu.xiangyue.R.layout.tb_*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.tb_*" />
+        <path value="com.yuxiu.xiangyue.R.color.tb_*" />
+
+        <!--图片相关-->
+        <path value="com.yuxiu.xiangyue.R.drawable.ic_voice_*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.count_down_*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.select_*" />
+        <path value="com.yuxiu.xiangyue.R.drawable.unselect_*" />
+
+        <!--应用图标-->
+        <path value="com.yuxiu.xiangyue.R.mipmap.ic_launcher" />
+
+        <!--Group相关-->
+        <!--login_activity_login-->
+        <path value="com.yuxiu.xiangyue.R.id.iv_wx_icon" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_wx" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_phone" />
+        <path value="com.yuxiu.xiangyue.R.id.edit_phone" />
+        <path value="com.yuxiu.xiangyue.R.id.view_phone_line" />
+        <path value="com.yuxiu.xiangyue.R.id.view_sms_line" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_smscode" />
+        <path value="com.yuxiu.xiangyue.R.id.edit_smscode" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_sendcode" />
+        <path value="com.yuxiu.xiangyue.R.id.btn_check_code" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_onclick_phone" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_telecom" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_onclick_login" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_other_phone" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_protoclo_txt" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_protoclo_name" />
+        <!--fragment_im_chat_layout-->
+        <path value="com.yuxiu.xiangyue.R.id.tv_other_name" />
+        <path value="com.yuxiu.xiangyue.R.id.rlOnlineTag" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_intimacy_unfold" />
+        <path value="com.yuxiu.xiangyue.R.id.txtIntimacy_unfold" />
+        <!--user_bind_phone-->
+        <path value="com.yuxiu.xiangyue.R.id.tv_title" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_phone" />
+        <path value="com.yuxiu.xiangyue.R.id.edit_phone" />
+        <path value="com.yuxiu.xiangyue.R.id.view_phone_line" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_smscode" />
+        <path value="com.yuxiu.xiangyue.R.id.edit_smscode" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_sendcode" />
+        <path value="com.yuxiu.xiangyue.R.id.view_sms_line" />
+        <path value="com.yuxiu.xiangyue.R.id.btn_check_code" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_one_click_other" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_one_click_title" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_one_click_phone" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_one_click_bind" />
+        <!--rainpacket_view_group_layout-->
+        <path value="com.yuxiu.xiangyue.R.id.red_packet_countdown_title" />
+        <path value="com.yuxiu.xiangyue.R.id.red_packet_countdown" />
+        <path value="com.yuxiu.xiangyue.R.id.red_packet_countdown_icon" />
+        <!--dialog_reg_gift-->
+        <path value="com.yuxiu.xiangyue.R.id.view_bg" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_gold" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_gold_des" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_gold_count" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_title" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_tip" />
+        <path value="com.yuxiu.xiangyue.R.id.btn_confirm" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_top_head" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_bottom_close" />
+        <path value="com.yuxiu.xiangyue.R.id.svgaView" />
+        <!--dialog_version_update-->
+        <path value="com.yuxiu.xiangyue.R.id.download_pg" />
+        <path value="com.yuxiu.xiangyue.R.id.download_text" />
+        <path value="com.yuxiu.xiangyue.R.id.btnContainer" />
+        <!--item_im_sayhello_tip_layout-->
+        <path value="com.yuxiu.xiangyue.R.id.user_iv" />
+        <path value="com.yuxiu.xiangyue.R.id.user_content" />
+        <path value="com.yuxiu.xiangyue.R.id.user_reply" />
+        <path value="com.yuxiu.xiangyue.R.id.user_line" />
+        <!--activity_integral-->
+        <path value="com.yuxiu.xiangyue.R.id.tv_account_title_male" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_amount_male" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_exchange_title_male" />
+        <path value="com.yuxiu.xiangyue.R.id.rv_exchange" />
+        <path value="com.yuxiu.xiangyue.R.id.view_empty" />
+        <!--activity_enter_invite_code-->
+        <path value="com.yuxiu.xiangyue.R.id.ll_et_content" />
+        <path value="com.yuxiu.xiangyue.R.id.tvPositive" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_invite_name" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_invite_uid" />
+        <!--user_activity_home_page-->
+        <path value="com.yuxiu.xiangyue.R.id.cons_add_buddy_two_bg" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_send_text_msg" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_send_video_msg" />
+        <path value="com.yuxiu.xiangyue.R.id.rl_like" />
+        <!--user_fragment-->
+        <path value="com.yuxiu.xiangyue.R.id.tv_male_jine" />
+        <path value="com.yuxiu.xiangyue.R.id.textView2" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_male_jine_content" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_portraints" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_protraint_txt1" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_protraint_txt2" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_signed_left" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_signed_num" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_signed_right" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_finish_task" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_sign_me" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_do_task" />
+        <path value="com.yuxiu.xiangyue.R.id.iv_finish_task" />
+        <!--dialog_teenage_mode_des-->
+        <path value="com.yuxiu.xiangyue.R.id.tv_select_list" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_des_confirm" />
+        <path value="com.yuxiu.xiangyue.R.id.et_password" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_confirm" />
+        <!--user_activity_setting-->
+        <path value="com.yuxiu.xiangyue.R.id.tv_city" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_city_tip" />
+        <path value="com.yuxiu.xiangyue.R.id.sb_city" />
+        <!--mix_video_chat-->
+        <path value="com.yuxiu.xiangyue.R.id.tvHangup" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_hangup_text" />
+        <path value="com.yuxiu.xiangyue.R.id.clNickName" />
+        <path value="com.yuxiu.xiangyue.R.id.containerFull" />
+        <path value="com.yuxiu.xiangyue.R.id.containerWindow" />
+        <path value="com.yuxiu.xiangyue.R.id.bottomMask" />
+        <path value="com.yuxiu.xiangyue.R.id.imgHangup" />
+        <path value="com.yuxiu.xiangyue.R.id.imgRecharge" />
+        <path value="com.yuxiu.xiangyue.R.id.video_tvHangup" />
+        <path value="com.yuxiu.xiangyue.R.id.tvRecharge" />
+        <path value="com.yuxiu.xiangyue.R.id.tv_time_count" />
+    </issue>
+
+    <issue id="keepmapping" isactive="true">
+        <path value="..\src\xiangyue\resource_mapping.txt"/>
+    </issue>
+
+    <!--compress, if you want to compress the file, the name is relative path, such as resources.arsc, res/drawable-hdpi/welcome.png-->
+    <!--what can you compress? generally, if your resources.arsc less than 1m, you can compress it. and i think compress .png, .jpg is ok-->
+    <!--isactive, whether to use compress, you can set false to close it simply-->
+    <issue id="compress" isactive="true">
+        <!--you must use / separation, and it support *, ?, such as *.png, *.jpg, res/drawable-hdpi/welcome_?.png-->
+        <path value="*.png" />
+        <path value="*.jpg" />
+        <path value="*.jpeg" />
+        <path value="*.gif" />
+        <path value="*.webp" />
+    </issue>
+</resproguard>

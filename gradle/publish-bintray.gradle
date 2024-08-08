@@ -1,3 +1,4 @@
+/*
 apply plugin: 'com.jfrog.bintray'
 if (System.getProperty("uploadToBintray", "false").equalsIgnoreCase("true")) {
     bintray {
@@ -20,4 +21,4 @@ if (System.getProperty("uploadToBintray", "false").equalsIgnoreCase("true")) {
         }
         publications = ['MyPublication']
     }
-}
+}*/

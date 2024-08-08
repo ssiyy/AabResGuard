@@ -88,3 +88,5 @@
 #保护泛型
 -keepattributes Signature
 -keep class com.bytedance.android.aabresguard.AabResGuardMain { *; }
+
+-keep class com.luciad.imageio.webp.** {*;}
